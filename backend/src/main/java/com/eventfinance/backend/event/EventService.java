@@ -1,5 +1,6 @@
 package com.eventfinance.backend.event;
 
+import com.eventfinance.backend.common.exception.ResourceNotFoundException;
 import com.eventfinance.backend.event.dto.EventRequest;
 import com.eventfinance.backend.event.dto.EventResponse;
 import org.springframework.stereotype.Service;
@@ -46,7 +47,7 @@ public class EventService {
     public EventResponse getEventById(Long id) {
         Event event = eventRepository.findById(id)
                 .orElseThrow(() ->
-                        new RuntimeException("Event not found with id: " + id)
+                        new ResourceNotFoundException("Event not found with id: " + id)
                 );
 
         return mapToResponse(event);
@@ -64,5 +65,41 @@ public class EventService {
                 event.getCreatedAt(),
                 event.getUpdatedAt()
         );
+    }
+
+    public EventResponse updateEvent(Long id, EventRequest request) {
+
+        Event event = eventRepository.findById(id)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Event not found with id: " + id)
+                );
+
+        if (request.endDate().isBefore(request.startDate())) {
+            throw new IllegalArgumentException(
+                    "End date cannot be before start date"
+            );
+        }
+
+        event.setName(request.name());
+        event.setEventType(request.eventType());
+        event.setStartDate(request.startDate());
+        event.setEndDate(request.endDate());
+        event.setBudget(request.budget());
+        event.setStatus(request.status());
+
+        Event updatedEvent = eventRepository.save(event);
+
+        return mapToResponse(updatedEvent);
+    }
+
+    public void deleteEvent(Long id) {
+
+        if (!eventRepository.existsById(id)) {
+            throw new ResourceNotFoundException(
+                    "Event not found with id: " + id
+            );
+        }
+
+        eventRepository.deleteById(id);
     }
 }
