@@ -1,4 +1,4 @@
-package com.eventfinance.backend.contribution;
+package com.eventfinance.backend.common.payment;
 
 public enum PaymentMode {
     CASH,

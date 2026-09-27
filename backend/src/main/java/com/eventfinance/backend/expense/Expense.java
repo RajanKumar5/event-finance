@@ -1,5 +1,6 @@
 package com.eventfinance.backend.expense;
 
+import com.eventfinance.backend.common.payment.PaymentMode;
 import com.eventfinance.backend.event.Event;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -41,8 +42,9 @@ public class Expense {
     @Column(name = "expense_date", nullable = false)
     private LocalDate expenseDate;
 
-    @Column(name = "payment_mode", length = 20)
-    private String paymentMode;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "payment_mode", nullable = false, length = 20)
+    private PaymentMode paymentMode;
 
     @Column(name = "paid_by", length = 150)
     private String paidBy;

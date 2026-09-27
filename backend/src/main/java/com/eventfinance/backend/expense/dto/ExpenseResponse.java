@@ -1,5 +1,6 @@
 package com.eventfinance.backend.expense.dto;
 
+import com.eventfinance.backend.common.payment.PaymentMode;
 import com.eventfinance.backend.expense.ExpenseCategory;
 
 import java.math.BigDecimal;
@@ -15,7 +16,7 @@ public record ExpenseResponse(
         String vendorName,
         BigDecimal amount,
         LocalDate expenseDate,
-        String paymentMode,
+        PaymentMode paymentMode,
         String paidBy,
         String paymentReference,
         String notes,

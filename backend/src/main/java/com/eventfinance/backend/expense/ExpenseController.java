@@ -1,5 +1,6 @@
 package com.eventfinance.backend.expense;
 
+import com.eventfinance.backend.expense.dto.ExpenseCategorySummary;
 import com.eventfinance.backend.expense.dto.ExpenseRequest;
 import com.eventfinance.backend.expense.dto.ExpenseResponse;
 import jakarta.validation.Valid;
@@ -41,6 +42,44 @@ public class ExpenseController {
     ) {
         return ResponseEntity.ok(
                 expenseService.getExpensesByEvent(eventId)
+        );
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ExpenseResponse> getExpenseById(
+            @PathVariable Long id
+    ) {
+        return ResponseEntity.ok(
+                expenseService.getExpenseById(id)
+        );
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<ExpenseResponse> updateExpense(
+            @PathVariable Long id,
+            @Valid @RequestBody ExpenseRequest request
+    ) {
+        return ResponseEntity.ok(
+                expenseService.updateExpense(id, request)
+        );
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteExpense(
+            @PathVariable Long id
+    ) {
+        expenseService.deleteExpense(id);
+
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/event/{eventId}/summary-by-category")
+    public ResponseEntity<List<ExpenseCategorySummary>>
+    getExpenseSummaryByCategory(
+            @PathVariable Long eventId
+    ) {
+        return ResponseEntity.ok(
+                expenseService.getExpenseSummaryByCategory(eventId)
         );
     }
 }

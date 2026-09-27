@@ -1,5 +1,6 @@
 package com.eventfinance.backend.expense.dto;
 
+import com.eventfinance.backend.common.payment.PaymentMode;
 import com.eventfinance.backend.expense.ExpenseCategory;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
@@ -31,8 +32,8 @@ public record ExpenseRequest(
         @NotNull(message = "Expense date is required")
         LocalDate expenseDate,
 
-        @Size(max = 20)
-        String paymentMode,
+        @NotNull(message = "Payment mode is required")
+        PaymentMode paymentMode,
 
         @Size(max = 150)
         String paidBy,

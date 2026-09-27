@@ -1,6 +1,6 @@
 package com.eventfinance.backend.contribution.dto;
 
-import com.eventfinance.backend.contribution.PaymentMode;
+import com.eventfinance.backend.common.payment.PaymentMode;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

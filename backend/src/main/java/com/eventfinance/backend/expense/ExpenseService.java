@@ -3,6 +3,7 @@ package com.eventfinance.backend.expense;
 import com.eventfinance.backend.common.exception.ResourceNotFoundException;
 import com.eventfinance.backend.event.Event;
 import com.eventfinance.backend.event.EventRepository;
+import com.eventfinance.backend.expense.dto.ExpenseCategorySummary;
 import com.eventfinance.backend.expense.dto.ExpenseRequest;
 import com.eventfinance.backend.expense.dto.ExpenseResponse;
 import org.springframework.stereotype.Service;
@@ -106,5 +107,96 @@ public class ExpenseService {
         return expenseRepository
                 .findByEventId(eventId)
                 .size();
+    }
+
+    public ExpenseResponse getExpenseById(Long id) {
+
+        Expense expense = expenseRepository.findById(id)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Expense not found with id: " + id
+                        )
+                );
+
+        return mapToResponse(expense);
+    }
+
+    public ExpenseResponse updateExpense(
+            Long id,
+            ExpenseRequest request
+    ) {
+
+        Expense expense = expenseRepository.findById(id)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Expense not found with id: " + id
+                        )
+                );
+
+        Event event = eventRepository.findById(request.eventId())
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Event not found with id: " + request.eventId()
+                        )
+                );
+
+        expense.setEvent(event);
+        expense.setCategory(request.category());
+        expense.setDescription(request.description());
+        expense.setVendorName(request.vendorName());
+        expense.setAmount(request.amount());
+        expense.setExpenseDate(request.expenseDate());
+        expense.setPaymentMode(request.paymentMode());
+        expense.setPaidBy(request.paidBy());
+        expense.setPaymentReference(request.paymentReference());
+        expense.setNotes(request.notes());
+
+        return mapToResponse(
+                expenseRepository.save(expense)
+        );
+    }
+
+    public void deleteExpense(Long id) {
+
+        if (!expenseRepository.existsById(id)) {
+            throw new ResourceNotFoundException(
+                    "Expense not found with id: " + id
+            );
+        }
+
+        expenseRepository.deleteById(id);
+    }
+
+    public List<ExpenseCategorySummary> getExpenseSummaryByCategory(
+            Long eventId
+    ) {
+
+        if (!eventRepository.existsById(eventId)) {
+            throw new ResourceNotFoundException(
+                    "Event not found with id: " + eventId
+            );
+        }
+
+        return expenseRepository.findByEventId(eventId)
+                .stream()
+                .collect(
+                        java.util.stream.Collectors.groupingBy(
+                                Expense::getCategory,
+                                java.util.stream.Collectors.reducing(
+                                        BigDecimal.ZERO,
+                                        Expense::getAmount,
+                                        BigDecimal::add
+                                )
+                        )
+                )
+                .entrySet()
+                .stream()
+                .map(entry ->
+                        new ExpenseCategorySummary(
+                                entry.getKey(),
+                                entry.getValue()
+                        )
+                )
+                .toList();
     }
 }

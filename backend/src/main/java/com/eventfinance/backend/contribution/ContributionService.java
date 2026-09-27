@@ -1,6 +1,7 @@
 package com.eventfinance.backend.contribution;
 
 import com.eventfinance.backend.common.exception.ResourceNotFoundException;
+import com.eventfinance.backend.common.payment.PaymentMode;
 import com.eventfinance.backend.contribution.dto.ContributionRequest;
 import com.eventfinance.backend.contribution.dto.ContributionResponse;
 import com.eventfinance.backend.contribution.dto.EventCollectionSummary;

@@ -1,5 +1,6 @@
 package com.eventfinance.backend.contribution;
 
+import com.eventfinance.backend.common.payment.PaymentMode;
 import com.eventfinance.backend.contributor.Contributor;
 import com.eventfinance.backend.event.Event;
 import jakarta.persistence.*;
