@@ -7,6 +7,7 @@ import com.eventfinance.backend.expense.dto.ExpenseRequest;
 import com.eventfinance.backend.expense.dto.ExpenseResponse;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Service
@@ -88,5 +89,22 @@ public class ExpenseService {
                 expense.getCreatedAt(),
                 expense.getUpdatedAt()
         );
+    }
+
+    public BigDecimal getTotalExpensesByEvent(Long eventId) {
+
+        return expenseRepository.findByEventId(eventId)
+                .stream()
+                .map(Expense::getAmount)
+                .reduce(
+                        BigDecimal.ZERO,
+                        BigDecimal::add
+                );
+    }
+
+    public long getExpenseCountByEvent(Long eventId) {
+        return expenseRepository
+                .findByEventId(eventId)
+                .size();
     }
 }
