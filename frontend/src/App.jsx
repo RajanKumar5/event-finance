@@ -8,6 +8,7 @@ import AppLayout from "./layouts/AppLayout";
 import Dashboard from "./pages/Dashboard";
 import Contributors from "./pages/Contributors";
 import Contributions from "./pages/Contributions";
+import Expenses from "./pages/Expenses";
 
 function App() {
   return (
@@ -31,6 +32,11 @@ function App() {
         <Route
           path="/contributions"
           element={<Contributions />}
+        />
+
+        <Route
+          path="/expenses"
+          element={<Expenses />}
         />
       </Route>
     </Routes>

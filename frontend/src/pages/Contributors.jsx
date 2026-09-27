@@ -141,27 +141,29 @@ const Contributors = () => {
             <div className="table-card">
                 <h2>Contributor List</h2>
 
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Address</th>
-                            <th>Phone</th>
-                            <th>Notes</th>
-                        </tr>
-                    </thead>
-
-                    <tbody>
-                        {contributors.map((contributor) => (
-                            <tr key={contributor.id}>
-                                <td>{contributor.name}</td>
-                                <td>{contributor.address}</td>
-                                <td>{contributor.phone || "-"}</td>
-                                <td>{contributor.notes || "-"}</td>
+                <div className="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Address</th>
+                                <th>Phone</th>
+                                <th>Notes</th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
+                        </thead>
+
+                        <tbody>
+                            {contributors.map((contributor) => (
+                                <tr key={contributor.id}>
+                                    <td>{contributor.name}</td>
+                                    <td>{contributor.address}</td>
+                                    <td>{contributor.phone || "-"}</td>
+                                    <td>{contributor.notes || "-"}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     );

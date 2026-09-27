@@ -252,32 +252,33 @@ const Contributions = () => {
 
             <div className="table-card">
                 <h2>Contribution List</h2>
-
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Receipt</th>
-                            <th>Date</th>
-                            <th>Contributor</th>
-                            <th>Address</th>
-                            <th>Mode</th>
-                            <th>Amount</th>
-                        </tr>
-                    </thead>
-
-                    <tbody>
-                        {contributions.map((contribution) => (
-                            <tr key={contribution.id}>
-                                <td>{contribution.receiptNumber}</td>
-                                <td>{contribution.paymentDate}</td>
-                                <td>{contribution.contributorName}</td>
-                                <td>{contribution.contributorAddress}</td>
-                                <td>{contribution.paymentMode}</td>
-                                <td>₹{contribution.amountPaid}</td>
+                <div className="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Receipt</th>
+                                <th>Date</th>
+                                <th>Contributor</th>
+                                <th>Address</th>
+                                <th>Mode</th>
+                                <th>Amount</th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
+                        </thead>
+
+                        <tbody>
+                            {contributions.map((contribution) => (
+                                <tr key={contribution.id}>
+                                    <td>{contribution.receiptNumber}</td>
+                                    <td>{contribution.paymentDate}</td>
+                                    <td>{contribution.contributorName}</td>
+                                    <td>{contribution.contributorAddress}</td>
+                                    <td>{contribution.paymentMode}</td>
+                                    <td>₹{contribution.amountPaid}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     );

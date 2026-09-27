@@ -66,6 +66,7 @@ body {
 .page-container {
   max-width: 1200px;
   margin: 0 auto;
+
   padding: 32px;
 }
 
@@ -118,15 +119,22 @@ td {
 }
 
 .sidebar {
-  width: 220px;
+  width: 230px;
+  min-width: 230px;
+
   background: #111827;
   color: white;
+
   padding: 24px 16px;
+
+  position: sticky;
+  top: 0;
+
+  height: 100vh;
 }
 
-.sidebar h2 {
-  margin-top: 0;
-  margin-bottom: 32px;
+.sidebar-logo {
+  margin: 0 0 32px;
 }
 
 .sidebar-nav {
@@ -138,8 +146,10 @@ td {
 .sidebar-nav a {
   color: #d1d5db;
   text-decoration: none;
-  padding: 10px 12px;
-  border-radius: 6px;
+
+  padding: 12px;
+
+  border-radius: 8px;
 }
 
 .sidebar-nav a:hover {
@@ -154,6 +164,167 @@ td {
 
 .app-content {
   flex: 1;
-  background: #f5f6f8;
   min-width: 0;
+}
+
+@media (max-width: 768px) {
+
+  .app-layout {
+    display: block;
+  }
+
+  .sidebar {
+    position: fixed;
+
+    bottom: 0;
+    top: auto;
+
+    left: 0;
+    right: 0;
+
+    width: 100%;
+    min-width: 0;
+    height: auto;
+
+    padding: 8px;
+
+    z-index: 1000;
+  }
+
+  .sidebar-logo {
+    display: none;
+  }
+
+  .sidebar-nav {
+    flex-direction: row;
+    justify-content: space-around;
+    gap: 4px;
+  }
+
+  .sidebar-nav a {
+    flex: 1;
+
+    text-align: center;
+
+    padding: 10px 4px;
+
+    font-size: 12px;
+  }
+
+  .app-content {
+    padding-bottom: 70px;
+  }
+}
+
+@media (max-width: 768px) {
+
+  .page-container {
+    padding: 16px;
+  }
+
+}
+
+.form-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+
+  gap: 16px;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-field-full {
+  grid-column: 1 / -1;
+}
+
+.form-field label {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.form-field input,
+.form-field select,
+.form-field textarea {
+  width: 100%;
+
+  padding: 11px 12px;
+
+  border: 1px solid #d1d5db;
+
+  border-radius: 8px;
+
+  font-size: 16px;
+}
+
+@media (max-width: 600px) {
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .form-field-full {
+    grid-column: auto;
+  }
+
+}
+
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  min-width: 700px;
+  border-collapse: collapse;
+}
+
+.primary-button {
+  border: none;
+  border-radius: 8px;
+
+  padding: 12px 18px;
+
+  font-size: 15px;
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+.primary-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+@media (max-width: 600px) {
+
+  .primary-button {
+    width: 100%;
+  }
+
+}
+
+@media (max-width: 480px) {
+
+  .dashboard-grid {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+
+    gap: 10px;
+  }
+
+  .dashboard-card {
+    padding: 14px;
+  }
+
+  .dashboard-card-value {
+    font-size: 20px;
+  }
+
 }

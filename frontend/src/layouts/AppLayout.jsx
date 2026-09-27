@@ -4,7 +4,9 @@ const AppLayout = () => {
     return (
         <div className="app-layout">
             <aside className="sidebar">
-                <h2>Event Finance</h2>
+                <h2 className="sidebar-logo">
+                    Event Finance
+                </h2>
 
                 <nav className="sidebar-nav">
                     <NavLink to="/dashboard">
