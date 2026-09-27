@@ -21,46 +21,17 @@ public class ContributorService {
     public ContributorResponse createContributor(
             ContributorRequest request
     ) {
-
-        if (contributorRepository.existsByReceiptNumber(
-                request.receiptNumber()
-        )) {
-            throw new IllegalArgumentException(
-                    "Receipt number already exists: "
-                            + request.receiptNumber()
-            );
-        }
-
-        if (request.paymentMode() == PaymentMode.UPI
-                && (request.upiPaidTo() == null
-                || request.upiPaidTo().isBlank())) {
-
-            throw new IllegalArgumentException(
-                    "UPI Paid To is required when payment mode is UPI"
-            );
-        }
-
         Contributor contributor = new Contributor();
 
-        contributor.setReceiptNumber(request.receiptNumber());
-        contributor.setDate(request.date());
-        contributor.setPaymentMode(request.paymentMode());
         contributor.setName(request.name());
         contributor.setHouseNumber(request.houseNumber());
         contributor.setArea(request.area());
-        contributor.setAmountPaid(request.amountPaid());
-        contributor.setPaymentReference(request.paymentReference());
         contributor.setPhone(request.phone());
         contributor.setNotes(request.notes());
 
-        if (request.paymentMode() == PaymentMode.UPI) {
-            contributor.setUpiPaidTo(request.upiPaidTo());
-        }
-
-        Contributor savedContributor =
-                contributorRepository.save(contributor);
-
-        return mapToResponse(savedContributor);
+        return mapToResponse(
+                contributorRepository.save(contributor)
+        );
     }
 
     public List<ContributorResponse> getAllContributors() {
@@ -85,19 +56,12 @@ public class ContributorService {
     private ContributorResponse mapToResponse(
             Contributor contributor
     ) {
-
         return new ContributorResponse(
                 contributor.getId(),
-                contributor.getReceiptNumber(),
-                contributor.getDate(),
-                contributor.getPaymentMode(),
                 contributor.getName(),
                 contributor.getHouseNumber(),
                 contributor.getArea(),
                 contributor.getAddress(),
-                contributor.getAmountPaid(),
-                contributor.getUpiPaidTo(),
-                contributor.getPaymentReference(),
                 contributor.getPhone(),
                 contributor.getNotes(),
                 contributor.getCreatedAt(),
@@ -116,37 +80,11 @@ public class ContributorService {
                         )
                 );
 
-        if (!contributor.getReceiptNumber().equals(request.receiptNumber())
-                && contributorRepository.existsByReceiptNumber(request.receiptNumber())) {
-            throw new IllegalArgumentException(
-                    "Receipt number already exists: " + request.receiptNumber()
-            );
-        }
-
-        if (request.paymentMode() == PaymentMode.UPI
-                && (request.upiPaidTo() == null
-                || request.upiPaidTo().isBlank())) {
-            throw new IllegalArgumentException(
-                    "UPI Paid To is required when payment mode is UPI"
-            );
-        }
-
-        contributor.setReceiptNumber(request.receiptNumber());
-        contributor.setDate(request.date());
-        contributor.setPaymentMode(request.paymentMode());
         contributor.setName(request.name());
         contributor.setHouseNumber(request.houseNumber());
         contributor.setArea(request.area());
-        contributor.setAmountPaid(request.amountPaid());
-        contributor.setPaymentReference(request.paymentReference());
         contributor.setPhone(request.phone());
         contributor.setNotes(request.notes());
-
-        if (request.paymentMode() == PaymentMode.UPI) {
-            contributor.setUpiPaidTo(request.upiPaidTo());
-        } else {
-            contributor.setUpiPaidTo(null);
-        }
 
         return mapToResponse(
                 contributorRepository.save(contributor)
