@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import Dashboard from "./pages/Dashboard";
+import Contributors from "./pages/Contributors";
 
 function App() {
   return (
@@ -9,6 +10,11 @@ function App() {
       <Route
         path="/dashboard"
         element={<Dashboard />}
+      />
+
+      <Route
+        path="/contributors"
+        element={<Contributors />}
       />
     </Routes>
   );

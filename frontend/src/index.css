@@ -62,3 +62,52 @@ body {
   margin: 10px 0 0;
   font-size: 26px;
 }
+
+.page-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 32px;
+}
+
+.form-card,
+.table-card {
+  background: white;
+  padding: 24px;
+  border-radius: 10px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.form-card {
+  display: grid;
+  gap: 12px;
+}
+
+.form-card input,
+.form-card select,
+.form-card textarea,
+.form-card button {
+  padding: 10px 12px;
+  font-size: 14px;
+}
+
+.form-card textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+.form-card button {
+  cursor: pointer;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #e5e7eb;
+}
