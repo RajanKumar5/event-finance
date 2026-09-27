@@ -9,6 +9,8 @@ import { getAllEvents } from "../api/eventApi";
 
 const EventContext = createContext(null);
 
+const SELECTED_EVENT_KEY = "selectedEventId";
+
 export const EventProvider = ({ children }) => {
     const [events, setEvents] = useState([]);
     const [selectedEventId, setSelectedEventId] = useState("");
@@ -21,11 +23,36 @@ export const EventProvider = ({ children }) => {
 
                 setEvents(data);
 
-                if (data.length > 0) {
+                if (data.length === 0) {
+                    setSelectedEventId("");
+                    return;
+                }
+
+                const storedEventId =
+                    localStorage.getItem(SELECTED_EVENT_KEY);
+
+                const storedEventStillExists =
+                    data.some(
+                        (event) =>
+                            String(event.id) ===
+                            String(storedEventId)
+                    );
+
+                if (storedEventId && storedEventStillExists) {
+                    setSelectedEventId(storedEventId);
+                } else {
                     setSelectedEventId(data[0].id);
+
+                    localStorage.setItem(
+                        SELECTED_EVENT_KEY,
+                        data[0].id
+                    );
                 }
             } catch (error) {
-                console.error("Failed to load events", error);
+                console.error(
+                    "Failed to load events",
+                    error
+                );
             } finally {
                 setLoadingEvents(false);
             }
@@ -34,9 +61,20 @@ export const EventProvider = ({ children }) => {
         loadEvents();
     }, []);
 
+    const changeSelectedEvent = (eventId) => {
+        setSelectedEventId(eventId);
+
+        localStorage.setItem(
+            SELECTED_EVENT_KEY,
+            eventId
+        );
+    };
+
     const selectedEvent =
         events.find(
-            (event) => String(event.id) === String(selectedEventId)
+            (event) =>
+                String(event.id) ===
+                String(selectedEventId)
         ) || null;
 
     return (
@@ -45,7 +83,10 @@ export const EventProvider = ({ children }) => {
                 events,
                 selectedEventId,
                 selectedEvent,
-                setSelectedEventId,
+
+                setSelectedEventId:
+                    changeSelectedEvent,
+
                 loadingEvents,
             }}
         >
@@ -55,5 +96,13 @@ export const EventProvider = ({ children }) => {
 };
 
 export const useEvent = () => {
-    return useContext(EventContext);
+    const context = useContext(EventContext);
+
+    if (!context) {
+        throw new Error(
+            "useEvent must be used inside EventProvider"
+        );
+    }
+
+    return context;
 };

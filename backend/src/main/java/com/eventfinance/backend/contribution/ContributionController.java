@@ -77,4 +77,27 @@ public class ContributionController {
                         .getEventCollectionSummary(eventId)
         );
     }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<ContributionResponse>
+    updateContribution(
+            @PathVariable Long id,
+            @Valid @RequestBody ContributionRequest request
+    ) {
+
+        return ResponseEntity.ok(
+                contributionService.updateContribution(
+                        id,
+                        request
+                )
+        );
+    }
+
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteContribution(
+            @PathVariable Long id
+    ) {
+        contributionService.deleteContribution(id);
+    }
 }

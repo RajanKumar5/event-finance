@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import {
     createExpense,
+    deleteExpense,
     getExpensesByEvent,
+    updateExpense,
 } from "../api/expenseApi";
 import { useEvent } from "../context/EventContext";
 
@@ -19,25 +21,30 @@ const ExpenseCategories = [
     "MISCELLANEOUS",
 ];
 
+const emptyForm = {
+    category: "DECORATION",
+    description: "",
+    vendorName: "",
+    amount: "",
+    expenseDate: new Date().toISOString().split("T")[0],
+    paymentMode: "CASH",
+    paidBy: "",
+    paymentReference: "",
+    notes: "",
+};
+
 const Expenses = () => {
     const { selectedEventId, selectedEvent } = useEvent();
 
     const [expenses, setExpenses] = useState([]);
+    const [form, setForm] = useState(emptyForm);
 
-    const [form, setForm] = useState({
-        category: "DECORATION",
-        description: "",
-        vendorName: "",
-        amount: "",
-        expenseDate: new Date().toISOString().split("T")[0],
-        paymentMode: "CASH",
-        paidBy: "",
-        paymentReference: "",
-        notes: "",
-    });
+    const [editingId, setEditingId] = useState(null);
 
     const [loading, setLoading] = useState(false);
     const [loadingExpenses, setLoadingExpenses] = useState(false);
+    const [deletingId, setDeletingId] = useState(null);
+
     const [error, setError] = useState("");
 
     useEffect(() => {
@@ -73,6 +80,37 @@ const Expenses = () => {
         }));
     };
 
+    const resetForm = () => {
+        setForm(emptyForm);
+        setEditingId(null);
+    };
+
+    const handleEdit = (expense) => {
+        setEditingId(expense.id);
+
+        setForm({
+            category: expense.category,
+            description: expense.description,
+            vendorName: expense.vendorName || "",
+            amount: expense.amount,
+            expenseDate: expense.expenseDate,
+            paymentMode: expense.paymentMode,
+            paidBy: expense.paidBy || "",
+            paymentReference: expense.paymentReference || "",
+            notes: expense.notes || "",
+        });
+
+        window.scrollTo({
+            top: 0,
+            behavior: "smooth",
+        });
+    };
+
+    const handleCancelEdit = () => {
+        resetForm();
+        setError("");
+    };
+
     const handleSubmit = async (event) => {
         event.preventDefault();
 
@@ -87,41 +125,28 @@ const Expenses = () => {
 
             const request = {
                 eventId: Number(selectedEventId),
-
                 category: form.category,
-
                 description: form.description,
-
-                vendorName:
-                    form.vendorName || null,
-
+                vendorName: form.vendorName || null,
                 amount: Number(form.amount),
-
                 expenseDate: form.expenseDate,
-
                 paymentMode: form.paymentMode,
-
-                paidBy:
-                    form.paidBy || null,
-
+                paidBy: form.paidBy || null,
                 paymentReference:
                     form.paymentReference || null,
-
-                notes:
-                    form.notes || null,
+                notes: form.notes || null,
             };
 
-            await createExpense(request);
+            if (editingId) {
+                await updateExpense(
+                    editingId,
+                    request
+                );
+            } else {
+                await createExpense(request);
+            }
 
-            setForm((previous) => ({
-                ...previous,
-                description: "",
-                vendorName: "",
-                amount: "",
-                paidBy: "",
-                paymentReference: "",
-                notes: "",
-            }));
+            resetForm();
 
             await loadExpenses(selectedEventId);
         } catch (err) {
@@ -129,11 +154,46 @@ const Expenses = () => {
 
             const message =
                 err.response?.data?.message ||
-                "Failed to create expense";
+                (editingId
+                    ? "Failed to update expense"
+                    : "Failed to create expense");
 
             setError(message);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleDelete = async (id) => {
+        const shouldDelete = window.confirm(
+            "Are you sure you want to delete this expense?"
+        );
+
+        if (!shouldDelete) {
+            return;
+        }
+
+        try {
+            setDeletingId(id);
+            setError("");
+
+            await deleteExpense(id);
+
+            if (editingId === id) {
+                resetForm();
+            }
+
+            await loadExpenses(selectedEventId);
+        } catch (err) {
+            console.error(err);
+
+            const message =
+                err.response?.data?.message ||
+                "Failed to delete expense";
+
+            setError(message);
+        } finally {
+            setDeletingId(null);
         }
     };
 
@@ -155,7 +215,11 @@ const Expenses = () => {
                 className="form-card"
                 onSubmit={handleSubmit}
             >
-                <h2>Add Expense</h2>
+                <h2>
+                    {editingId
+                        ? "Edit Expense"
+                        : "Add Expense"}
+                </h2>
 
                 <div className="form-grid">
                     <div className="form-field">
@@ -167,14 +231,19 @@ const Expenses = () => {
                             onChange={handleChange}
                             required
                         >
-                            {ExpenseCategories.map((category) => (
-                                <option
-                                    key={category}
-                                    value={category}
-                                >
-                                    {category.replaceAll("_", " ")}
-                                </option>
-                            ))}
+                            {ExpenseCategories.map(
+                                (category) => (
+                                    <option
+                                        key={category}
+                                        value={category}
+                                    >
+                                        {category.replaceAll(
+                                            "_",
+                                            " "
+                                        )}
+                                    </option>
+                                )
+                            )}
                         </select>
                     </div>
 
@@ -285,18 +354,33 @@ const Expenses = () => {
                     </div>
                 </div>
 
-                <button
-                    className="primary-button"
-                    type="submit"
-                    disabled={
-                        loading ||
-                        !selectedEventId
-                    }
-                >
-                    {loading
-                        ? "Saving..."
-                        : "Add Expense"}
-                </button>
+                <div className="form-actions">
+                    <button
+                        className="primary-button"
+                        type="submit"
+                        disabled={
+                            loading ||
+                            !selectedEventId
+                        }
+                    >
+                        {loading
+                            ? "Saving..."
+                            : editingId
+                                ? "Update Expense"
+                                : "Add Expense"}
+                    </button>
+
+                    {editingId && (
+                        <button
+                            type="button"
+                            className="secondary-button"
+                            onClick={handleCancelEdit}
+                            disabled={loading}
+                        >
+                            Cancel
+                        </button>
+                    )}
+                </div>
             </form>
 
             {error && (
@@ -311,7 +395,9 @@ const Expenses = () => {
                 {loadingExpenses ? (
                     <p>Loading expenses...</p>
                 ) : expenses.length === 0 ? (
-                    <p>No expenses recorded for this event yet.</p>
+                    <p>
+                        No expenses recorded for this event yet.
+                    </p>
                 ) : (
                     <div className="table-wrapper">
                         <table>
@@ -323,6 +409,7 @@ const Expenses = () => {
                                     <th>Vendor</th>
                                     <th>Mode</th>
                                     <th>Amount</th>
+                                    <th>Actions</th>
                                 </tr>
                             </thead>
 
@@ -345,7 +432,8 @@ const Expenses = () => {
                                         </td>
 
                                         <td>
-                                            {expense.vendorName || "-"}
+                                            {expense.vendorName ||
+                                                "-"}
                                         </td>
 
                                         <td>
@@ -354,6 +442,41 @@ const Expenses = () => {
 
                                         <td>
                                             ₹{expense.amount}
+                                        </td>
+
+                                        <td>
+                                            <div className="table-actions">
+                                                <button
+                                                    type="button"
+                                                    className="secondary-button"
+                                                    onClick={() =>
+                                                        handleEdit(
+                                                            expense
+                                                        )
+                                                    }
+                                                >
+                                                    Edit
+                                                </button>
+
+                                                <button
+                                                    type="button"
+                                                    className="danger-button"
+                                                    onClick={() =>
+                                                        handleDelete(
+                                                            expense.id
+                                                        )
+                                                    }
+                                                    disabled={
+                                                        deletingId ===
+                                                        expense.id
+                                                    }
+                                                >
+                                                    {deletingId ===
+                                                        expense.id
+                                                        ? "Deleting..."
+                                                        : "Delete"}
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}

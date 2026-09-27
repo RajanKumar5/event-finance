@@ -79,51 +79,18 @@ public class ContributionService {
 
         if (request.paymentMode() == PaymentMode.UPI) {
             contribution.setUpiPaidTo(request.upiPaidTo());
+        } else {
+            contribution.setUpiPaidTo(null);
         }
 
-        return mapToResponse(
-                contributionRepository.save(contribution)
-        );
-    }
+        Contribution savedContribution =
+                contributionRepository.save(contribution);
 
-    private void validatePaymentDetails(
-            ContributionRequest request
-    ) {
-
-        if (request.paymentMode() == PaymentMode.UPI
-                && (request.upiPaidTo() == null
-                || request.upiPaidTo().isBlank())) {
-
-            throw new IllegalArgumentException(
-                    "UPI Paid To is required when payment mode is UPI"
-            );
-        }
-    }
-
-    private ContributionResponse mapToResponse(
-            Contribution contribution
-    ) {
-
-        return new ContributionResponse(
-                contribution.getId(),
-                contribution.getEvent().getId(),
-                contribution.getEvent().getName(),
-                contribution.getContributor().getId(),
-                contribution.getContributor().getName(),
-                contribution.getContributor().getAddress(),
-                contribution.getReceiptNumber(),
-                contribution.getPaymentDate(),
-                contribution.getPaymentMode(),
-                contribution.getAmountPaid(),
-                contribution.getUpiPaidTo(),
-                contribution.getPaymentReference(),
-                contribution.getNotes(),
-                contribution.getCreatedAt(),
-                contribution.getUpdatedAt()
-        );
+        return mapToResponse(savedContribution);
     }
 
     public List<ContributionResponse> getAllContributions() {
+
         return contributionRepository.findAll()
                 .stream()
                 .map(this::mapToResponse)
@@ -214,6 +181,138 @@ public class ContributionService {
                 bankCollected,
                 contributions.size(),
                 uniqueContributorCount
+        );
+    }
+
+    public ContributionResponse updateContribution(
+            Long id,
+            ContributionRequest request
+    ) {
+
+        Contribution contribution =
+                contributionRepository.findById(id)
+                        .orElseThrow(() ->
+                                new ResourceNotFoundException(
+                                        "Contribution not found with id: " + id
+                                )
+                        );
+
+        Event event =
+                eventRepository.findById(request.eventId())
+                        .orElseThrow(() ->
+                                new ResourceNotFoundException(
+                                        "Event not found with id: "
+                                                + request.eventId()
+                                )
+                        );
+
+        Contributor contributor =
+                contributorRepository.findById(request.contributorId())
+                        .orElseThrow(() ->
+                                new ResourceNotFoundException(
+                                        "Contributor not found with id: "
+                                                + request.contributorId()
+                                )
+                        );
+
+        boolean eventChanged =
+                !contribution.getEvent()
+                        .getId()
+                        .equals(request.eventId());
+
+        boolean receiptChanged =
+                !contribution.getReceiptNumber()
+                        .equalsIgnoreCase(
+                                request.receiptNumber()
+                        );
+
+        if ((eventChanged || receiptChanged)
+                && contributionRepository
+                .existsByEventIdAndReceiptNumber(
+                        request.eventId(),
+                        request.receiptNumber()
+                )) {
+
+            throw new IllegalArgumentException(
+                    "Receipt number already exists for this event: "
+                            + request.receiptNumber()
+            );
+        }
+
+        validatePaymentDetails(request);
+
+        contribution.setEvent(event);
+        contribution.setContributor(contributor);
+        contribution.setReceiptNumber(request.receiptNumber());
+        contribution.setPaymentDate(request.paymentDate());
+        contribution.setPaymentMode(request.paymentMode());
+        contribution.setAmountPaid(request.amountPaid());
+
+        if (request.paymentMode() == PaymentMode.UPI) {
+            contribution.setUpiPaidTo(request.upiPaidTo());
+        } else {
+            contribution.setUpiPaidTo(null);
+        }
+
+        contribution.setPaymentReference(
+                request.paymentReference()
+        );
+
+        contribution.setNotes(request.notes());
+
+        Contribution updatedContribution =
+                contributionRepository.save(contribution);
+
+        return mapToResponse(updatedContribution);
+    }
+
+    public void deleteContribution(Long id) {
+
+        Contribution contribution =
+                contributionRepository.findById(id)
+                        .orElseThrow(() ->
+                                new ResourceNotFoundException(
+                                        "Contribution not found with id: " + id
+                                )
+                        );
+
+        contributionRepository.delete(contribution);
+    }
+
+    private void validatePaymentDetails(
+            ContributionRequest request
+    ) {
+
+        if (request.paymentMode() == PaymentMode.UPI
+                && (request.upiPaidTo() == null
+                || request.upiPaidTo().isBlank())) {
+
+            throw new IllegalArgumentException(
+                    "UPI Paid To is required when payment mode is UPI"
+            );
+        }
+    }
+
+    private ContributionResponse mapToResponse(
+            Contribution contribution
+    ) {
+
+        return new ContributionResponse(
+                contribution.getId(),
+                contribution.getEvent().getId(),
+                contribution.getEvent().getName(),
+                contribution.getContributor().getId(),
+                contribution.getContributor().getName(),
+                contribution.getContributor().getAddress(),
+                contribution.getReceiptNumber(),
+                contribution.getPaymentDate(),
+                contribution.getPaymentMode(),
+                contribution.getAmountPaid(),
+                contribution.getUpiPaidTo(),
+                contribution.getPaymentReference(),
+                contribution.getNotes(),
+                contribution.getCreatedAt(),
+                contribution.getUpdatedAt()
         );
     }
 }
