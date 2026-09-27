@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
-import { getAllEvents } from "../api/eventApi";
-
 import {
     createExpense,
     getExpensesByEvent,
 } from "../api/expenseApi";
+import { useEvent } from "../context/EventContext";
 
 const ExpenseCategories = [
     "DECORATION",
@@ -21,11 +20,11 @@ const ExpenseCategories = [
 ];
 
 const Expenses = () => {
-    const [events, setEvents] = useState([]);
+    const { selectedEventId, selectedEvent } = useEvent();
+
     const [expenses, setExpenses] = useState([]);
 
     const [form, setForm] = useState({
-        eventId: "",
         category: "DECORATION",
         description: "",
         vendorName: "",
@@ -38,45 +37,30 @@ const Expenses = () => {
     });
 
     const [loading, setLoading] = useState(false);
+    const [loadingExpenses, setLoadingExpenses] = useState(false);
     const [error, setError] = useState("");
 
     useEffect(() => {
-        const loadEvents = async () => {
-            try {
-                const data = await getAllEvents();
-
-                setEvents(data);
-
-                if (data.length > 0) {
-                    setForm((previous) => ({
-                        ...previous,
-                        eventId: data[0].id,
-                    }));
-                }
-            } catch (err) {
-                console.error(err);
-                setError("Failed to load events");
-            }
-        };
-
-        loadEvents();
-    }, []);
-
-    useEffect(() => {
-        if (!form.eventId) {
+        if (!selectedEventId) {
+            setExpenses([]);
             return;
         }
 
-        loadExpenses(form.eventId);
-    }, [form.eventId]);
+        loadExpenses(selectedEventId);
+    }, [selectedEventId]);
 
     const loadExpenses = async (eventId) => {
         try {
+            setLoadingExpenses(true);
+            setError("");
+
             const data = await getExpensesByEvent(eventId);
             setExpenses(data);
         } catch (err) {
             console.error(err);
             setError("Failed to load expenses");
+        } finally {
+            setLoadingExpenses(false);
         }
     };
 
@@ -92,25 +76,36 @@ const Expenses = () => {
     const handleSubmit = async (event) => {
         event.preventDefault();
 
+        if (!selectedEventId) {
+            setError("Please select an event first");
+            return;
+        }
+
         try {
             setLoading(true);
             setError("");
 
             const request = {
-                ...form,
+                eventId: Number(selectedEventId),
 
-                eventId: Number(form.eventId),
+                category: form.category,
 
-                amount: Number(form.amount),
-
-                paymentReference:
-                    form.paymentReference || null,
+                description: form.description,
 
                 vendorName:
                     form.vendorName || null,
 
+                amount: Number(form.amount),
+
+                expenseDate: form.expenseDate,
+
+                paymentMode: form.paymentMode,
+
                 paidBy:
                     form.paidBy || null,
+
+                paymentReference:
+                    form.paymentReference || null,
 
                 notes:
                     form.notes || null,
@@ -128,7 +123,7 @@ const Expenses = () => {
                 notes: "",
             }));
 
-            await loadExpenses(form.eventId);
+            await loadExpenses(selectedEventId);
         } catch (err) {
             console.error(err);
 
@@ -147,7 +142,12 @@ const Expenses = () => {
             <div className="page-header">
                 <div>
                     <h1>Expenses</h1>
-                    <p>Record and track event spending</p>
+
+                    <p>
+                        {selectedEvent
+                            ? `Record and track spending for ${selectedEvent.name}`
+                            : "Select an event to manage expenses"}
+                    </p>
                 </div>
             </div>
 
@@ -158,26 +158,6 @@ const Expenses = () => {
                 <h2>Add Expense</h2>
 
                 <div className="form-grid">
-                    <div className="form-field form-field-full">
-                        <label>Event</label>
-
-                        <select
-                            name="eventId"
-                            value={form.eventId}
-                            onChange={handleChange}
-                            required
-                        >
-                            {events.map((event) => (
-                                <option
-                                    key={event.id}
-                                    value={event.id}
-                                >
-                                    {event.name}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-
                     <div className="form-field">
                         <label>Category</label>
 
@@ -257,9 +237,17 @@ const Expenses = () => {
                             onChange={handleChange}
                             required
                         >
-                            <option value="CASH">Cash</option>
-                            <option value="UPI">UPI</option>
-                            <option value="BANK">Bank</option>
+                            <option value="CASH">
+                                Cash
+                            </option>
+
+                            <option value="UPI">
+                                UPI
+                            </option>
+
+                            <option value="BANK">
+                                Bank
+                            </option>
                         </select>
                     </div>
 
@@ -300,9 +288,14 @@ const Expenses = () => {
                 <button
                     className="primary-button"
                     type="submit"
-                    disabled={loading}
+                    disabled={
+                        loading ||
+                        !selectedEventId
+                    }
                 >
-                    {loading ? "Saving..." : "Add Expense"}
+                    {loading
+                        ? "Saving..."
+                        : "Add Expense"}
                 </button>
             </form>
 
@@ -315,8 +308,10 @@ const Expenses = () => {
             <div className="table-card">
                 <h2>Expense List</h2>
 
-                {expenses.length === 0 ? (
-                    <p>No expenses recorded yet.</p>
+                {loadingExpenses ? (
+                    <p>Loading expenses...</p>
+                ) : expenses.length === 0 ? (
+                    <p>No expenses recorded for this event yet.</p>
                 ) : (
                     <div className="table-wrapper">
                         <table>
@@ -334,21 +329,32 @@ const Expenses = () => {
                             <tbody>
                                 {expenses.map((expense) => (
                                     <tr key={expense.id}>
-                                        <td>{expense.expenseDate}</td>
-
                                         <td>
-                                            {expense.category.replaceAll("_", " ")}
+                                            {expense.expenseDate}
                                         </td>
 
-                                        <td>{expense.description}</td>
+                                        <td>
+                                            {expense.category.replaceAll(
+                                                "_",
+                                                " "
+                                            )}
+                                        </td>
+
+                                        <td>
+                                            {expense.description}
+                                        </td>
 
                                         <td>
                                             {expense.vendorName || "-"}
                                         </td>
 
-                                        <td>{expense.paymentMode}</td>
+                                        <td>
+                                            {expense.paymentMode}
+                                        </td>
 
-                                        <td>₹{expense.amount}</td>
+                                        <td>
+                                            ₹{expense.amount}
+                                        </td>
                                     </tr>
                                 ))}
                             </tbody>

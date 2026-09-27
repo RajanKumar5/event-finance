@@ -1,32 +1,14 @@
 import { useEffect, useState } from "react";
 import { getEventDashboard } from "../api/dashboardApi";
-import { getAllEvents } from "../api/eventApi";
 import DashboardCard from "../components/DashboardCard";
+import { useEvent } from "../context/EventContext";
 
 const Dashboard = () => {
-    const [events, setEvents] = useState([]);
-    const [selectedEventId, setSelectedEventId] = useState("");
+    const { selectedEventId } = useEvent();
+
     const [dashboard, setDashboard] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
-
-    useEffect(() => {
-        const fetchEvents = async () => {
-            try {
-                const data = await getAllEvents();
-                setEvents(data);
-
-                if (data.length > 0) {
-                    setSelectedEventId(data[0].id);
-                }
-            } catch (err) {
-                console.error(err);
-                setError("Failed to load events");
-            }
-        };
-
-        fetchEvents();
-    }, []);
 
     useEffect(() => {
         if (!selectedEventId) {
@@ -57,24 +39,6 @@ const Dashboard = () => {
                 <div>
                     <h1>Event Finance</h1>
                     <p>Track collections, expenses, and event balance</p>
-                </div>
-
-                <div>
-                    <label htmlFor="event">Event </label>
-
-                    <select
-                        id="event"
-                        value={selectedEventId}
-                        onChange={(event) =>
-                            setSelectedEventId(event.target.value)
-                        }
-                    >
-                        {events.map((event) => (
-                            <option key={event.id} value={event.id}>
-                                {event.name}
-                            </option>
-                        ))}
-                    </select>
                 </div>
             </div>
 

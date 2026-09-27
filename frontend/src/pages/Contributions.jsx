@@ -1,18 +1,18 @@
 import { useEffect, useState } from "react";
-import { getAllEvents } from "../api/eventApi";
 import { getAllContributors } from "../api/contributorApi";
 import {
     createContribution,
     getContributionsByEvent,
 } from "../api/contributionApi";
+import { useEvent } from "../context/EventContext";
 
 const Contributions = () => {
-    const [events, setEvents] = useState([]);
+    const { selectedEventId, selectedEvent } = useEvent();
+
     const [contributors, setContributors] = useState([]);
     const [contributions, setContributions] = useState([]);
 
     const [form, setForm] = useState({
-        eventId: "",
         contributorId: "",
         receiptNumber: "",
         paymentDate: new Date().toISOString().split("T")[0],
@@ -24,25 +24,15 @@ const Contributions = () => {
     });
 
     const [loading, setLoading] = useState(false);
+    const [loadingContributions, setLoadingContributions] = useState(false);
     const [error, setError] = useState("");
 
     useEffect(() => {
-        const loadInitialData = async () => {
+        const loadContributors = async () => {
             try {
-                const [eventData, contributorData] = await Promise.all([
-                    getAllEvents(),
-                    getAllContributors(),
-                ]);
+                const contributorData = await getAllContributors();
 
-                setEvents(eventData);
                 setContributors(contributorData);
-
-                if (eventData.length > 0) {
-                    setForm((previous) => ({
-                        ...previous,
-                        eventId: eventData[0].id,
-                    }));
-                }
 
                 if (contributorData.length > 0) {
                     setForm((previous) => ({
@@ -52,28 +42,34 @@ const Contributions = () => {
                 }
             } catch (err) {
                 console.error(err);
-                setError("Failed to load contribution data");
+                setError("Failed to load contributors");
             }
         };
 
-        loadInitialData();
+        loadContributors();
     }, []);
 
     useEffect(() => {
-        if (!form.eventId) {
+        if (!selectedEventId) {
+            setContributions([]);
             return;
         }
 
-        loadContributions(form.eventId);
-    }, [form.eventId]);
+        loadContributions(selectedEventId);
+    }, [selectedEventId]);
 
     const loadContributions = async (eventId) => {
         try {
+            setLoadingContributions(true);
+            setError("");
+
             const data = await getContributionsByEvent(eventId);
             setContributions(data);
         } catch (err) {
             console.error(err);
             setError("Failed to load contributions");
+        } finally {
+            setLoadingContributions(false);
         }
     };
 
@@ -89,14 +85,28 @@ const Contributions = () => {
     const handleSubmit = async (event) => {
         event.preventDefault();
 
+        if (!selectedEventId) {
+            setError("Please select an event first");
+            return;
+        }
+
+        if (!form.contributorId) {
+            setError("Please select a contributor");
+            return;
+        }
+
         try {
             setLoading(true);
             setError("");
 
             const request = {
-                ...form,
-                eventId: Number(form.eventId),
+                eventId: Number(selectedEventId),
                 contributorId: Number(form.contributorId),
+
+                receiptNumber: form.receiptNumber,
+                paymentDate: form.paymentDate,
+                paymentMode: form.paymentMode,
+
                 amountPaid: Number(form.amountPaid),
 
                 upiPaidTo:
@@ -106,6 +116,9 @@ const Contributions = () => {
 
                 paymentReference:
                     form.paymentReference || null,
+
+                notes:
+                    form.notes || null,
             };
 
             await createContribution(request);
@@ -119,7 +132,7 @@ const Contributions = () => {
                 notes: "",
             }));
 
-            await loadContributions(form.eventId);
+            await loadContributions(selectedEventId);
         } catch (err) {
             console.error(err);
 
@@ -135,7 +148,17 @@ const Contributions = () => {
 
     return (
         <div className="page-container">
-            <h1>Contributions</h1>
+            <div className="page-header">
+                <div>
+                    <h1>Contributions</h1>
+
+                    <p>
+                        {selectedEvent
+                            ? `Manage collections for ${selectedEvent.name}`
+                            : "Select an event to manage contributions"}
+                    </p>
+                </div>
+            </div>
 
             <form
                 onSubmit={handleSubmit}
@@ -143,142 +166,222 @@ const Contributions = () => {
             >
                 <h2>Add Contribution</h2>
 
-                <label>Event</label>
+                <div className="form-grid">
+                    <div className="form-field form-field-full">
+                        <label>Contributor</label>
 
-                <select
-                    name="eventId"
-                    value={form.eventId}
-                    onChange={handleChange}
-                    required
-                >
-                    {events.map((event) => (
-                        <option
-                            key={event.id}
-                            value={event.id}
+                        <select
+                            name="contributorId"
+                            value={form.contributorId}
+                            onChange={handleChange}
+                            required
                         >
-                            {event.name}
-                        </option>
-                    ))}
-                </select>
+                            {contributors.length === 0 ? (
+                                <option value="">
+                                    No contributors available
+                                </option>
+                            ) : (
+                                contributors.map((contributor) => (
+                                    <option
+                                        key={contributor.id}
+                                        value={contributor.id}
+                                    >
+                                        {contributor.name} -{" "}
+                                        {contributor.address}
+                                    </option>
+                                ))
+                            )}
+                        </select>
+                    </div>
 
-                <label>Contributor</label>
+                    <div className="form-field">
+                        <label>Receipt Number</label>
 
-                <select
-                    name="contributorId"
-                    value={form.contributorId}
-                    onChange={handleChange}
-                    required
-                >
-                    {contributors.map((contributor) => (
-                        <option
-                            key={contributor.id}
-                            value={contributor.id}
+                        <input
+                            name="receiptNumber"
+                            placeholder="Receipt Number"
+                            value={form.receiptNumber}
+                            onChange={handleChange}
+                            required
+                        />
+                    </div>
+
+                    <div className="form-field">
+                        <label>Payment Date</label>
+
+                        <input
+                            type="date"
+                            name="paymentDate"
+                            value={form.paymentDate}
+                            onChange={handleChange}
+                            required
+                        />
+                    </div>
+
+                    <div className="form-field">
+                        <label>Payment Mode</label>
+
+                        <select
+                            name="paymentMode"
+                            value={form.paymentMode}
+                            onChange={handleChange}
+                            required
                         >
-                            {contributor.name} - {contributor.address}
-                        </option>
-                    ))}
-                </select>
+                            <option value="CASH">
+                                Cash
+                            </option>
 
-                <input
-                    name="receiptNumber"
-                    placeholder="Receipt Number"
-                    value={form.receiptNumber}
-                    onChange={handleChange}
-                    required
-                />
+                            <option value="UPI">
+                                UPI
+                            </option>
 
-                <input
-                    type="date"
-                    name="paymentDate"
-                    value={form.paymentDate}
-                    onChange={handleChange}
-                    required
-                />
+                            <option value="BANK">
+                                Bank
+                            </option>
+                        </select>
+                    </div>
 
-                <select
-                    name="paymentMode"
-                    value={form.paymentMode}
-                    onChange={handleChange}
-                >
-                    <option value="CASH">Cash</option>
-                    <option value="UPI">UPI</option>
-                    <option value="BANK">Bank</option>
-                </select>
+                    <div className="form-field">
+                        <label>Amount Paid</label>
 
-                <input
-                    type="number"
-                    name="amountPaid"
-                    placeholder="Amount Paid"
-                    value={form.amountPaid}
-                    onChange={handleChange}
-                    min="1"
-                    step="0.01"
-                    required
-                />
+                        <input
+                            type="number"
+                            name="amountPaid"
+                            placeholder="Amount Paid"
+                            value={form.amountPaid}
+                            onChange={handleChange}
+                            min="0.01"
+                            step="0.01"
+                            required
+                        />
+                    </div>
 
-                {form.paymentMode === "UPI" && (
-                    <input
-                        name="upiPaidTo"
-                        placeholder="UPI Paid To"
-                        value={form.upiPaidTo}
-                        onChange={handleChange}
-                        required
-                    />
-                )}
+                    {form.paymentMode === "UPI" && (
+                        <div className="form-field form-field-full">
+                            <label>UPI Paid To</label>
 
-                <input
-                    name="paymentReference"
-                    placeholder="Payment Reference"
-                    value={form.paymentReference}
-                    onChange={handleChange}
-                />
+                            <input
+                                name="upiPaidTo"
+                                placeholder="UPI Paid To"
+                                value={form.upiPaidTo}
+                                onChange={handleChange}
+                                required
+                            />
+                        </div>
+                    )}
 
-                <textarea
-                    name="notes"
-                    placeholder="Notes"
-                    value={form.notes}
-                    onChange={handleChange}
-                />
+                    <div className="form-field form-field-full">
+                        <label>Payment Reference</label>
+
+                        <input
+                            name="paymentReference"
+                            placeholder="UPI / Bank reference"
+                            value={form.paymentReference}
+                            onChange={handleChange}
+                        />
+                    </div>
+
+                    <div className="form-field form-field-full">
+                        <label>Notes</label>
+
+                        <textarea
+                            name="notes"
+                            placeholder="Notes"
+                            value={form.notes}
+                            onChange={handleChange}
+                        />
+                    </div>
+                </div>
 
                 <button
+                    className="primary-button"
                     type="submit"
-                    disabled={loading}
+                    disabled={
+                        loading ||
+                        !selectedEventId ||
+                        contributors.length === 0
+                    }
                 >
-                    {loading ? "Saving..." : "Add Contribution"}
+                    {loading
+                        ? "Saving..."
+                        : "Add Contribution"}
                 </button>
             </form>
 
-            {error && <p>{error}</p>}
+            {error && (
+                <div className="error-message">
+                    {error}
+                </div>
+            )}
 
             <div className="table-card">
                 <h2>Contribution List</h2>
-                <div className="table-wrapper">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Receipt</th>
-                                <th>Date</th>
-                                <th>Contributor</th>
-                                <th>Address</th>
-                                <th>Mode</th>
-                                <th>Amount</th>
-                            </tr>
-                        </thead>
 
-                        <tbody>
-                            {contributions.map((contribution) => (
-                                <tr key={contribution.id}>
-                                    <td>{contribution.receiptNumber}</td>
-                                    <td>{contribution.paymentDate}</td>
-                                    <td>{contribution.contributorName}</td>
-                                    <td>{contribution.contributorAddress}</td>
-                                    <td>{contribution.paymentMode}</td>
-                                    <td>₹{contribution.amountPaid}</td>
+                {loadingContributions ? (
+                    <p>Loading contributions...</p>
+                ) : contributions.length === 0 ? (
+                    <p>No contributions recorded for this event yet.</p>
+                ) : (
+                    <div className="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Receipt</th>
+                                    <th>Date</th>
+                                    <th>Contributor</th>
+                                    <th>Address</th>
+                                    <th>Mode</th>
+                                    <th>Amount</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
+                            </thead>
+
+                            <tbody>
+                                {contributions.map(
+                                    (contribution) => (
+                                        <tr key={contribution.id}>
+                                            <td>
+                                                {
+                                                    contribution.receiptNumber
+                                                }
+                                            </td>
+
+                                            <td>
+                                                {
+                                                    contribution.paymentDate
+                                                }
+                                            </td>
+
+                                            <td>
+                                                {
+                                                    contribution.contributorName
+                                                }
+                                            </td>
+
+                                            <td>
+                                                {
+                                                    contribution.contributorAddress
+                                                }
+                                            </td>
+
+                                            <td>
+                                                {
+                                                    contribution.paymentMode
+                                                }
+                                            </td>
+
+                                            <td>
+                                                ₹
+                                                {
+                                                    contribution.amountPaid
+                                                }
+                                            </td>
+                                        </tr>
+                                    )
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
             </div>
         </div>
     );
