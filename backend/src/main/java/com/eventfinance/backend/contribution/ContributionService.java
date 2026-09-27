@@ -9,6 +9,7 @@ import com.eventfinance.backend.contributor.Contributor;
 import com.eventfinance.backend.contributor.ContributorRepository;
 import com.eventfinance.backend.event.Event;
 import com.eventfinance.backend.event.EventRepository;
+import com.eventfinance.backend.event.EventStatus;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -42,6 +43,9 @@ public class ContributionService {
                                         + request.eventId()
                         )
                 );
+
+
+        validateEventIsWritable(event);
 
         Contributor contributor =
                 contributorRepository.findById(request.contributorId())
@@ -206,6 +210,8 @@ public class ContributionService {
                                 )
                         );
 
+        validateEventIsWritable(event);
+
         Contributor contributor =
                 contributorRepository.findById(request.contributorId())
                         .orElseThrow(() ->
@@ -276,6 +282,10 @@ public class ContributionService {
                                 )
                         );
 
+        validateEventIsWritable(
+                contribution.getEvent()
+        );
+
         contributionRepository.delete(contribution);
     }
 
@@ -314,5 +324,15 @@ public class ContributionService {
                 contribution.getCreatedAt(),
                 contribution.getUpdatedAt()
         );
+    }
+
+    private void validateEventIsWritable(Event event) {
+        if (event.getStatus() == EventStatus.COMPLETED
+                || event.getStatus() == EventStatus.ARCHIVED) {
+
+            throw new IllegalArgumentException(
+                    "Cannot modify financial records for a completed or archived event"
+            );
+        }
     }
 }

@@ -3,6 +3,7 @@ package com.eventfinance.backend.expense;
 import com.eventfinance.backend.common.exception.ResourceNotFoundException;
 import com.eventfinance.backend.event.Event;
 import com.eventfinance.backend.event.EventRepository;
+import com.eventfinance.backend.event.EventStatus;
 import com.eventfinance.backend.expense.dto.ExpenseCategorySummary;
 import com.eventfinance.backend.expense.dto.ExpenseRequest;
 import com.eventfinance.backend.expense.dto.ExpenseResponse;
@@ -33,6 +34,8 @@ public class ExpenseService {
                                 "Event not found with id: " + request.eventId()
                         )
                 );
+
+        validateEventIsWritable(event);
 
         Expense expense = new Expense();
 
@@ -140,6 +143,8 @@ public class ExpenseService {
                         )
                 );
 
+        validateEventIsWritable(event);
+
         expense.setEvent(event);
         expense.setCategory(request.category());
         expense.setDescription(request.description());
@@ -158,13 +163,18 @@ public class ExpenseService {
 
     public void deleteExpense(Long id) {
 
-        if (!expenseRepository.existsById(id)) {
-            throw new ResourceNotFoundException(
-                    "Expense not found with id: " + id
-            );
-        }
+        Expense expense = expenseRepository.findById(id)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Expense not found with id: " + id
+                        )
+                );
 
-        expenseRepository.deleteById(id);
+        validateEventIsWritable(
+                expense.getEvent()
+        );
+
+        expenseRepository.delete(expense);
     }
 
     public List<ExpenseCategorySummary> getExpenseSummaryByCategory(
@@ -198,5 +208,15 @@ public class ExpenseService {
                         )
                 )
                 .toList();
+    }
+
+    private void validateEventIsWritable(Event event) {
+        if (event.getStatus() == EventStatus.COMPLETED
+                || event.getStatus() == EventStatus.ARCHIVED) {
+
+            throw new IllegalArgumentException(
+                    "Cannot modify financial records for a completed or archived event"
+            );
+        }
     }
 }

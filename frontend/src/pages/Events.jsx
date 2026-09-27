@@ -344,7 +344,11 @@ const Events = () => {
                                 {events.map((event) => (
                                     <tr key={event.id}>
                                         <td>
-                                            {event.name}
+                                            <span
+                                                className={`status-badge status-${event.status.toLowerCase()}`}
+                                            >
+                                                {event.status}
+                                            </span>
                                         </td>
 
                                         <td>

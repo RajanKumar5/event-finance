@@ -1,6 +1,7 @@
 package com.eventfinance.backend.contributor;
 
 import com.eventfinance.backend.common.exception.ResourceNotFoundException;
+import com.eventfinance.backend.contribution.ContributionRepository;
 import com.eventfinance.backend.contributor.dto.ContributorRequest;
 import com.eventfinance.backend.contributor.dto.ContributorResponse;
 import org.springframework.stereotype.Service;
@@ -11,11 +12,14 @@ import java.util.List;
 public class ContributorService {
 
     private final ContributorRepository contributorRepository;
+    private final ContributionRepository contributionRepository;
 
     public ContributorService(
-            ContributorRepository contributorRepository
+            ContributorRepository contributorRepository,
+            ContributionRepository contributionRepository
     ) {
         this.contributorRepository = contributorRepository;
+        this.contributionRepository = contributionRepository;
     }
 
     public ContributorResponse createContributor(
@@ -92,13 +96,28 @@ public class ContributorService {
     }
 
     public void deleteContributor(Long id) {
-        if (!contributorRepository.existsById(id)) {
-            throw new ResourceNotFoundException(
-                    "Contributor not found with id: " + id
+
+        Contributor contributor =
+                contributorRepository
+                        .findById(id)
+                        .orElseThrow(() ->
+                                new ResourceNotFoundException(
+                                        "Contributor not found with id: "
+                                                + id
+                                )
+                        );
+
+        boolean hasContributions =
+                contributionRepository
+                        .existsByContributorId(id);
+
+        if (hasContributions) {
+            throw new IllegalArgumentException(
+                    "Cannot delete a contributor who has contribution records."
             );
         }
 
-        contributorRepository.deleteById(id);
+        contributorRepository.delete(contributor);
     }
 
     public List<ContributorResponse> getContributorsByArea(Area area) {

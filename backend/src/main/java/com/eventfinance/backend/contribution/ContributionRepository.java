@@ -14,6 +14,8 @@ public interface ContributionRepository
 
     boolean existsByEventId(Long eventId);
 
+    boolean existsByContributorId(Long contributorId);
+
     List<Contribution> findByEventId(Long eventId);
 
     List<Contribution> findByContributorId(Long contributorId);

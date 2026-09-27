@@ -24,9 +24,23 @@ public record EventDashboardResponse(
 
         BigDecimal bankCollected,
 
+        BigDecimal cashExpenses,
+
+        BigDecimal upiExpenses,
+
+        BigDecimal bankExpenses,
+
+        BigDecimal cashBalance,
+
+        BigDecimal upiBalance,
+
+        BigDecimal bankBalance,
+
         long contributionCount,
 
         long expenseCount,
+
+        long totalContributorCount,
 
         long uniqueContributorCount
 
