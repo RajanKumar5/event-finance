@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { getEventDashboard } from "../api/dashboardApi";
 import { getAllEvents } from "../api/eventApi";
+import DashboardCard from "../components/DashboardCard";
 
 const Dashboard = () => {
     const [events, setEvents] = useState([]);
@@ -51,25 +52,30 @@ const Dashboard = () => {
     }, [selectedEventId]);
 
     return (
-        <div>
-            <h1>Event Finance Dashboard</h1>
+        <div className="dashboard-page">
+            <div className="dashboard-header">
+                <div>
+                    <h1>Event Finance</h1>
+                    <p>Track collections, expenses, and event balance</p>
+                </div>
 
-            <div>
-                <label htmlFor="event">Select Event: </label>
+                <div>
+                    <label htmlFor="event">Event </label>
 
-                <select
-                    id="event"
-                    value={selectedEventId}
-                    onChange={(event) =>
-                        setSelectedEventId(event.target.value)
-                    }
-                >
-                    {events.map((event) => (
-                        <option key={event.id} value={event.id}>
-                            {event.name}
-                        </option>
-                    ))}
-                </select>
+                    <select
+                        id="event"
+                        value={selectedEventId}
+                        onChange={(event) =>
+                            setSelectedEventId(event.target.value)
+                        }
+                    >
+                        {events.map((event) => (
+                            <option key={event.id} value={event.id}>
+                                {event.name}
+                            </option>
+                        ))}
+                    </select>
+                </div>
             </div>
 
             {loading && <p>Loading dashboard...</p>}
@@ -77,44 +83,70 @@ const Dashboard = () => {
             {error && <p>{error}</p>}
 
             {!loading && dashboard && (
-                <div>
+                <>
                     <h2>{dashboard.eventName}</h2>
 
-                    <p>Budget: ₹{dashboard.budget}</p>
+                    <div className="dashboard-grid">
+                        <DashboardCard
+                            title="Total Collected"
+                            value={`₹${dashboard.totalCollected}`}
+                        />
 
-                    <p>
-                        Budget Remaining: ₹{dashboard.budgetRemaining}
-                    </p>
+                        <DashboardCard
+                            title="Total Expenses"
+                            value={`₹${dashboard.totalExpenses}`}
+                        />
 
-                    <p>
-                        Total Collected: ₹{dashboard.totalCollected}
-                    </p>
+                        <DashboardCard
+                            title="Current Balance"
+                            value={`₹${dashboard.balance}`}
+                        />
 
-                    <p>
-                        Total Expenses: ₹{dashboard.totalExpenses}
-                    </p>
+                        <DashboardCard
+                            title="Budget"
+                            value={`₹${dashboard.budget}`}
+                        />
 
-                    <p>Balance: ₹{dashboard.balance}</p>
+                        <DashboardCard
+                            title="Budget Remaining"
+                            value={`₹${dashboard.budgetRemaining}`}
+                        />
 
-                    <hr />
+                        <DashboardCard
+                            title="Contributors"
+                            value={dashboard.uniqueContributorCount}
+                        />
+                    </div>
 
-                    <p>Cash: ₹{dashboard.cashCollected}</p>
-                    <p>UPI: ₹{dashboard.upiCollected}</p>
-                    <p>Bank: ₹{dashboard.bankCollected}</p>
+                    <h2>Collection Breakdown</h2>
 
-                    <hr />
+                    <div className="dashboard-grid">
+                        <DashboardCard
+                            title="Cash"
+                            value={`₹${dashboard.cashCollected}`}
+                        />
 
-                    <p>
-                        Contributions: {dashboard.contributionCount}
-                    </p>
+                        <DashboardCard
+                            title="UPI"
+                            value={`₹${dashboard.upiCollected}`}
+                        />
 
-                    <p>Expenses: {dashboard.expenseCount}</p>
+                        <DashboardCard
+                            title="Bank"
+                            value={`₹${dashboard.bankCollected}`}
+                        />
 
-                    <p>
-                        Unique Contributors:{" "}
-                        {dashboard.uniqueContributorCount}
-                    </p>
-                </div>
+                        <DashboardCard
+                            title="Contributions"
+                            value={dashboard.contributionCount}
+                        />
+
+                        <DashboardCard
+                            title="Expenses"
+                            value={dashboard.expenseCount}
+                        />
+                    </div>
+                </>
             )}
         </div>
     );
