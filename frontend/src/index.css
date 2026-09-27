@@ -111,3 +111,49 @@ td {
   text-align: left;
   border-bottom: 1px solid #e5e7eb;
 }
+
+.app-layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+.sidebar {
+  width: 220px;
+  background: #111827;
+  color: white;
+  padding: 24px 16px;
+}
+
+.sidebar h2 {
+  margin-top: 0;
+  margin-bottom: 32px;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sidebar-nav a {
+  color: #d1d5db;
+  text-decoration: none;
+  padding: 10px 12px;
+  border-radius: 6px;
+}
+
+.sidebar-nav a:hover {
+  background: #1f2937;
+  color: white;
+}
+
+.sidebar-nav a.active {
+  background: #374151;
+  color: white;
+}
+
+.app-content {
+  flex: 1;
+  background: #f5f6f8;
+  min-width: 0;
+}
