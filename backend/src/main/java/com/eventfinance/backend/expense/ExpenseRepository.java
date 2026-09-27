@@ -8,4 +8,6 @@ public interface ExpenseRepository
         extends JpaRepository<Expense, Long> {
 
     List<Expense> findByEventId(Long eventId);
+
+    boolean existsByEventId(Long eventId);
 }

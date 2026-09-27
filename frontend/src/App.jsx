@@ -9,6 +9,7 @@ import Dashboard from "./pages/Dashboard";
 import Contributors from "./pages/Contributors";
 import Contributions from "./pages/Contributions";
 import Expenses from "./pages/Expenses";
+import Events from "./pages/Events";
 
 function App() {
   return (
@@ -16,7 +17,12 @@ function App() {
       <Route element={<AppLayout />}>
         <Route
           path="/"
-          element={<Navigate to="/dashboard" />}
+          element={
+            <Navigate
+              to="/dashboard"
+              replace
+            />
+          }
         />
 
         <Route
@@ -37,6 +43,11 @@ function App() {
         <Route
           path="/expenses"
           element={<Expenses />}
+        />
+
+        <Route
+          path="/events"
+          element={<Events />}
         />
       </Route>
     </Routes>

@@ -12,6 +12,8 @@ public interface ContributionRepository
             String receiptNumber
     );
 
+    boolean existsByEventId(Long eventId);
+
     List<Contribution> findByEventId(Long eventId);
 
     List<Contribution> findByContributorId(Long contributorId);

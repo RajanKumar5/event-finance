@@ -16,49 +16,70 @@ export const EventProvider = ({ children }) => {
     const [selectedEventId, setSelectedEventId] = useState("");
     const [loadingEvents, setLoadingEvents] = useState(true);
 
-    useEffect(() => {
-        const loadEvents = async () => {
-            try {
-                const data = await getAllEvents();
+    const refreshEvents = async () => {
+        try {
+            setLoadingEvents(true);
 
-                setEvents(data);
+            const data = await getAllEvents();
 
-                if (data.length === 0) {
-                    setSelectedEventId("");
-                    return;
-                }
+            setEvents(data);
 
-                const storedEventId =
-                    localStorage.getItem(SELECTED_EVENT_KEY);
-
-                const storedEventStillExists =
-                    data.some(
-                        (event) =>
-                            String(event.id) ===
-                            String(storedEventId)
-                    );
-
-                if (storedEventId && storedEventStillExists) {
-                    setSelectedEventId(storedEventId);
-                } else {
-                    setSelectedEventId(data[0].id);
-
-                    localStorage.setItem(
-                        SELECTED_EVENT_KEY,
-                        data[0].id
-                    );
-                }
-            } catch (error) {
-                console.error(
-                    "Failed to load events",
-                    error
-                );
-            } finally {
-                setLoadingEvents(false);
+            if (data.length === 0) {
+                setSelectedEventId("");
+                localStorage.removeItem(SELECTED_EVENT_KEY);
+                return;
             }
-        };
 
-        loadEvents();
+            const storedEventId =
+                localStorage.getItem(SELECTED_EVENT_KEY);
+
+            const currentSelectedEventStillExists =
+                data.some(
+                    (event) =>
+                        String(event.id) ===
+                        String(selectedEventId)
+                );
+
+            const storedEventStillExists =
+                data.some(
+                    (event) =>
+                        String(event.id) ===
+                        String(storedEventId)
+                );
+
+            if (
+                selectedEventId &&
+                currentSelectedEventStillExists
+            ) {
+                return;
+            }
+
+            if (
+                storedEventId &&
+                storedEventStillExists
+            ) {
+                setSelectedEventId(storedEventId);
+                return;
+            }
+
+            setSelectedEventId(data[0].id);
+
+            localStorage.setItem(
+                SELECTED_EVENT_KEY,
+                data[0].id
+            );
+        } catch (error) {
+            console.error(
+                "Failed to load events",
+                error
+            );
+        } finally {
+            setLoadingEvents(false);
+        }
+    };
+
+    useEffect(() => {
+        refreshEvents();
     }, []);
 
     const changeSelectedEvent = (eventId) => {
@@ -83,11 +104,10 @@ export const EventProvider = ({ children }) => {
                 events,
                 selectedEventId,
                 selectedEvent,
-
                 setSelectedEventId:
                     changeSelectedEvent,
-
                 loadingEvents,
+                refreshEvents,
             }}
         >
             {children}

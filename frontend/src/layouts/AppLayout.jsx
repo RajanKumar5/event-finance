@@ -54,6 +54,9 @@ const AppLayout = () => {
                 </div>
 
                 <nav className="sidebar-nav">
+                    <NavLink to="/events">
+                        Events
+                    </NavLink>
                     <NavLink to="/dashboard">
                         Dashboard
                     </NavLink>

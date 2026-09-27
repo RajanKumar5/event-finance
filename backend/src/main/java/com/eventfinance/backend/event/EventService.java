@@ -1,8 +1,10 @@
 package com.eventfinance.backend.event;
 
 import com.eventfinance.backend.common.exception.ResourceNotFoundException;
+import com.eventfinance.backend.contribution.ContributionRepository;
 import com.eventfinance.backend.event.dto.EventRequest;
 import com.eventfinance.backend.event.dto.EventResponse;
+import com.eventfinance.backend.expense.ExpenseRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -11,9 +13,15 @@ import java.util.List;
 public class EventService {
 
     private final EventRepository eventRepository;
+    private final ContributionRepository contributionRepository;
+    private final ExpenseRepository expenseRepository;
 
-    public EventService(EventRepository eventRepository) {
+    public EventService(EventRepository eventRepository,
+                        ContributionRepository contributionRepository,
+                        ExpenseRepository expenseRepository) {
         this.eventRepository = eventRepository;
+        this.contributionRepository = contributionRepository;
+        this.expenseRepository = expenseRepository;
     }
 
     public EventResponse createEvent(EventRequest request) {
@@ -94,12 +102,25 @@ public class EventService {
 
     public void deleteEvent(Long id) {
 
-        if (!eventRepository.existsById(id)) {
-            throw new ResourceNotFoundException(
-                    "Event not found with id: " + id
+        Event event = eventRepository.findById(id)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Event not found with id: " + id
+                        )
+                );
+
+        boolean hasContributions =
+                contributionRepository.existsByEventId(id);
+
+        boolean hasExpenses =
+                expenseRepository.existsByEventId(id);
+
+        if (hasContributions || hasExpenses) {
+            throw new IllegalArgumentException(
+                    "Cannot delete an event that has contributions or expenses. Archive the event instead."
             );
         }
 
-        eventRepository.deleteById(id);
+        eventRepository.delete(event);
     }
 }
