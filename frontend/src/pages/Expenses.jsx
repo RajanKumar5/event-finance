@@ -532,6 +532,19 @@ const Expenses = () => {
             : -comparison;
     });
 
+    const filteredTotalExpense =
+        filteredExpenses.reduce(
+            (
+                total,
+                expense
+            ) =>
+                total +
+                Number(
+                    expense.amount || 0
+                ),
+            0
+        );
+
     const clearFilters = () => {
         setSearchTerm("");
         setCategoryFilter("ALL");
@@ -961,6 +974,19 @@ const Expenses = () => {
                             Clear Filters
                         </button>
                     )}
+                </div>
+
+                <div className="expense-summary-card">
+                    <span>
+                        Total Expense
+                    </span>
+
+                    <strong>
+                        ₹
+                        {filteredTotalExpense.toFixed(
+                            2
+                        )}
+                    </strong>
                 </div>
 
                 {loadingExpenses ? (
