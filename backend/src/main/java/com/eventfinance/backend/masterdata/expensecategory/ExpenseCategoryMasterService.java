@@ -1,23 +1,31 @@
 package com.eventfinance.backend.masterdata.expensecategory;
 
 import com.eventfinance.backend.common.exception.ResourceNotFoundException;
+import com.eventfinance.backend.expense.ExpenseRepository;
 import com.eventfinance.backend.masterdata.expensecategory.dto.ExpenseCategoryMasterRequest;
 import com.eventfinance.backend.masterdata.expensecategory.dto.ExpenseCategoryMasterResponse;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+
 
 @Service
 public class ExpenseCategoryMasterService {
 
     private final ExpenseCategoryMasterRepository repository;
 
+    private final ExpenseRepository expenseRepository;
+
 
     public ExpenseCategoryMasterService(
-            ExpenseCategoryMasterRepository repository
+            ExpenseCategoryMasterRepository repository,
+            ExpenseRepository expenseRepository
     ) {
         this.repository = repository;
+        this.expenseRepository = expenseRepository;
     }
 
 
@@ -52,27 +60,22 @@ public class ExpenseCategoryMasterService {
         ExpenseCategoryMaster category =
                 new ExpenseCategoryMaster();
 
+
         category.setCode(
                 code
         );
 
+
         category.setName(
                 name
         );
+
 
         category.setActive(
                 request.active()
         );
 
 
-        /*
-         * sortOrder is no longer exposed
-         * to the UI.
-         *
-         * Keep a default value only because
-         * the existing entity/database still
-         * contains this field.
-         */
         category.setSortOrder(
                 0
         );
@@ -90,11 +93,6 @@ public class ExpenseCategoryMasterService {
     }
 
 
-    /*
-     * Used by the existing controller:
-     *
-     * GET /master/expense-categories
-     */
     @Transactional(readOnly = true)
     public List<ExpenseCategoryMasterResponse> getAll() {
 
@@ -108,10 +106,6 @@ public class ExpenseCategoryMasterService {
     }
 
 
-    /*
-     * Used by the existing controller when
-     * activeOnly=true.
-     */
     @Transactional(readOnly = true)
     public List<ExpenseCategoryMasterResponse> getActive() {
 
@@ -125,11 +119,6 @@ public class ExpenseCategoryMasterService {
     }
 
 
-    /*
-     * Keeping this overload also makes the
-     * service convenient if another class
-     * already uses getAll(boolean).
-     */
     @Transactional(readOnly = true)
     public List<ExpenseCategoryMasterResponse> getAll(
             boolean activeOnly
@@ -169,11 +158,10 @@ public class ExpenseCategoryMasterService {
 
 
         /*
-         * Category code is intentionally
-         * immutable after creation.
+         * Category code remains immutable.
          *
-         * Existing expense records depend
-         * on this stable code.
+         * Existing expenses may depend on this
+         * stable master-data record.
          */
         String name =
                 normalizeName(
@@ -184,6 +172,7 @@ public class ExpenseCategoryMasterService {
         category.setName(
                 name
         );
+
 
         category.setActive(
                 request.active()
@@ -227,6 +216,46 @@ public class ExpenseCategoryMasterService {
 
         return mapToResponse(
                 saved
+        );
+    }
+
+
+    /*
+     * Permanently delete an expense category
+     * only when it has never been used by an
+     * Expense record.
+     */
+    @Transactional
+    public void delete(
+            Long id
+    ) {
+
+        ExpenseCategoryMaster category =
+                getEntity(
+                        id
+                );
+
+
+        boolean used =
+                expenseRepository
+                        .existsByCategoryMasterId(
+                                id
+                        );
+
+
+        if (used) {
+
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Expense category \""
+                            + category.getName()
+                            + "\" cannot be deleted because it is already used by one or more expenses."
+            );
+        }
+
+
+        repository.delete(
+                category
         );
     }
 

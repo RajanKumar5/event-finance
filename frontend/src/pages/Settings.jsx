@@ -7,6 +7,8 @@ import {
 import {
     createArea,
     createExpenseCategory,
+    deleteArea,
+    deleteExpenseCategory,
     getAreas,
     getExpenseCategories,
     updateArea,
@@ -26,7 +28,6 @@ const createEmptyForm = () => ({
 
 
 const Settings = () => {
-
     /*
      * =========================
      * Expense Category State
@@ -68,6 +69,12 @@ const Settings = () => {
     const [
         categoryStatusUpdatingId,
         setCategoryStatusUpdatingId,
+    ] = useState(null);
+
+
+    const [
+        deletingCategoryId,
+        setDeletingCategoryId,
     ] = useState(null);
 
 
@@ -128,6 +135,12 @@ const Settings = () => {
 
 
     const [
+        deletingAreaId,
+        setDeletingAreaId,
+    ] = useState(null);
+
+
+    const [
         areaSearchTerm,
         setAreaSearchTerm,
     ] = useState("");
@@ -165,9 +178,7 @@ const Settings = () => {
 
     const loadExpenseCategories =
         async () => {
-
             try {
-
                 setLoadingCategories(
                     true
                 );
@@ -182,9 +193,7 @@ const Settings = () => {
                 setExpenseCategories(
                     data
                 );
-
             } catch (err) {
-
                 console.error(
                     err
                 );
@@ -196,9 +205,7 @@ const Settings = () => {
                         ?.message ||
                     "Failed to load expense categories"
                 );
-
             } finally {
-
                 setLoadingCategories(
                     false
                 );
@@ -208,9 +215,7 @@ const Settings = () => {
 
     const loadAreas =
         async () => {
-
             try {
-
                 setLoadingAreas(
                     true
                 );
@@ -225,9 +230,7 @@ const Settings = () => {
                 setAreas(
                     data
                 );
-
             } catch (err) {
-
                 console.error(
                     err
                 );
@@ -239,9 +242,7 @@ const Settings = () => {
                         ?.message ||
                     "Failed to load areas"
                 );
-
             } finally {
-
                 setLoadingAreas(
                     false
                 );
@@ -250,10 +251,8 @@ const Settings = () => {
 
 
     useEffect(() => {
-
         const loadMasterData =
             async () => {
-
                 setError("");
 
 
@@ -265,7 +264,6 @@ const Settings = () => {
 
 
         loadMasterData();
-
     }, []);
 
 
@@ -278,7 +276,6 @@ const Settings = () => {
     const normalizeCode = (
         value
     ) => {
-
         return value
             .trim()
             .toUpperCase()
@@ -293,9 +290,24 @@ const Settings = () => {
     };
 
 
+    const getApiErrorMessage = (
+        err,
+        fallbackMessage
+    ) => {
+        return (
+            err.response
+                ?.data
+                ?.message ||
+            err.response
+                ?.data
+                ?.detail ||
+            fallbackMessage
+        );
+    };
+
+
     const resetCategoryForm =
         () => {
-
             setCategoryForm(
                 createEmptyForm()
             );
@@ -308,7 +320,6 @@ const Settings = () => {
 
     const resetAreaForm =
         () => {
-
             setAreaForm(
                 createEmptyForm()
             );
@@ -327,7 +338,6 @@ const Settings = () => {
 
     const handleCategoryChange =
         (event) => {
-
             const {
                 name,
                 value,
@@ -353,11 +363,9 @@ const Settings = () => {
 
     const handleCategoryCodeChange =
         (event) => {
-
             const normalized =
                 normalizeCode(
-                    event.target
-                        .value
+                    event.target.value
                 );
 
 
@@ -374,7 +382,6 @@ const Settings = () => {
 
     const handleCategoryEdit =
         (category) => {
-
             setError("");
 
             setSuccessMessage("");
@@ -406,7 +413,6 @@ const Settings = () => {
 
     const handleCategoryCancelEdit =
         () => {
-
             setError("");
 
             setSuccessMessage("");
@@ -417,7 +423,6 @@ const Settings = () => {
 
     const handleCategorySubmit =
         async (event) => {
-
             event.preventDefault();
 
 
@@ -425,7 +430,6 @@ const Settings = () => {
                 !categoryForm.code
                     .trim()
             ) {
-
                 setError(
                     "Category code is required"
                 );
@@ -438,7 +442,6 @@ const Settings = () => {
                 !categoryForm.name
                     .trim()
             ) {
-
                 setError(
                     "Category name is required"
                 );
@@ -448,7 +451,6 @@ const Settings = () => {
 
 
             try {
-
                 setLoadingCategory(
                     true
                 );
@@ -479,7 +481,6 @@ const Settings = () => {
                     editingCategoryId !==
                     null
                 ) {
-
                     await updateExpenseCategory(
                         editingCategoryId,
                         request
@@ -489,9 +490,7 @@ const Settings = () => {
                     setSuccessMessage(
                         "Expense category updated successfully"
                     );
-
                 } else {
-
                     await createExpenseCategory(
                         request
                     );
@@ -507,28 +506,22 @@ const Settings = () => {
 
 
                 await loadExpenseCategories();
-
             } catch (err) {
-
                 console.error(
                     err
                 );
 
 
                 setError(
-                    err.response
-                        ?.data
-                        ?.message ||
-                    (
+                    getApiErrorMessage(
+                        err,
                         editingCategoryId !==
                             null
                             ? "Failed to update expense category"
                             : "Failed to create expense category"
                     )
                 );
-
             } finally {
-
                 setLoadingCategory(
                     false
                 );
@@ -540,7 +533,6 @@ const Settings = () => {
         async (
             category
         ) => {
-
             const nextStatus =
                 !category.active;
 
@@ -565,7 +557,6 @@ const Settings = () => {
 
 
             try {
-
                 setCategoryStatusUpdatingId(
                     category.id
                 );
@@ -590,24 +581,97 @@ const Settings = () => {
 
 
                 await loadExpenseCategories();
-
             } catch (err) {
-
                 console.error(
                     err
                 );
 
 
                 setError(
-                    err.response
-                        ?.data
-                        ?.message ||
-                    "Failed to update expense category status"
+                    getApiErrorMessage(
+                        err,
+                        "Failed to update expense category status"
+                    )
+                );
+            } finally {
+                setCategoryStatusUpdatingId(
+                    null
+                );
+            }
+        };
+
+
+    /*
+     * Category can be permanently deleted
+     * only when the backend confirms that
+     * no Expense references it.
+     */
+    const handleCategoryDelete =
+        async (
+            category
+        ) => {
+            const shouldDelete =
+                window.confirm(
+                    `Permanently delete expense category "${category.name}"?\n\n` +
+                    "This is only allowed if the category has never been used by an expense."
                 );
 
-            } finally {
 
-                setCategoryStatusUpdatingId(
+            if (
+                !shouldDelete
+            ) {
+                return;
+            }
+
+
+            try {
+                setDeletingCategoryId(
+                    category.id
+                );
+
+                setError("");
+
+                setSuccessMessage("");
+
+
+                await deleteExpenseCategory(
+                    category.id
+                );
+
+
+                /*
+                 * If the currently edited category
+                 * was deleted, return the form to
+                 * create mode.
+                 */
+                if (
+                    editingCategoryId ===
+                    category.id
+                ) {
+                    resetCategoryForm();
+                }
+
+
+                setSuccessMessage(
+                    `Expense category "${category.name}" deleted successfully`
+                );
+
+
+                await loadExpenseCategories();
+            } catch (err) {
+                console.error(
+                    err
+                );
+
+
+                setError(
+                    getApiErrorMessage(
+                        err,
+                        "Failed to delete expense category"
+                    )
+                );
+            } finally {
+                setDeletingCategoryId(
                     null
                 );
             }
@@ -622,7 +686,6 @@ const Settings = () => {
 
     const handleAreaChange =
         (event) => {
-
             const {
                 name,
                 value,
@@ -648,11 +711,9 @@ const Settings = () => {
 
     const handleAreaCodeChange =
         (event) => {
-
             const normalized =
                 normalizeCode(
-                    event.target
-                        .value
+                    event.target.value
                 );
 
 
@@ -669,7 +730,6 @@ const Settings = () => {
 
     const handleAreaEdit =
         (area) => {
-
             setError("");
 
             setSuccessMessage("");
@@ -701,7 +761,6 @@ const Settings = () => {
 
     const handleAreaCancelEdit =
         () => {
-
             setError("");
 
             setSuccessMessage("");
@@ -712,7 +771,6 @@ const Settings = () => {
 
     const handleAreaSubmit =
         async (event) => {
-
             event.preventDefault();
 
 
@@ -720,7 +778,6 @@ const Settings = () => {
                 !areaForm.code
                     .trim()
             ) {
-
                 setError(
                     "Area code is required"
                 );
@@ -733,7 +790,6 @@ const Settings = () => {
                 !areaForm.name
                     .trim()
             ) {
-
                 setError(
                     "Area name is required"
                 );
@@ -743,7 +799,6 @@ const Settings = () => {
 
 
             try {
-
                 setLoadingArea(
                     true
                 );
@@ -774,7 +829,6 @@ const Settings = () => {
                     editingAreaId !==
                     null
                 ) {
-
                     await updateArea(
                         editingAreaId,
                         request
@@ -784,9 +838,7 @@ const Settings = () => {
                     setSuccessMessage(
                         "Area updated successfully"
                     );
-
                 } else {
-
                     await createArea(
                         request
                     );
@@ -802,28 +854,22 @@ const Settings = () => {
 
 
                 await loadAreas();
-
             } catch (err) {
-
                 console.error(
                     err
                 );
 
 
                 setError(
-                    err.response
-                        ?.data
-                        ?.message ||
-                    (
+                    getApiErrorMessage(
+                        err,
                         editingAreaId !==
                             null
                             ? "Failed to update area"
                             : "Failed to create area"
                     )
                 );
-
             } finally {
-
                 setLoadingArea(
                     false
                 );
@@ -835,7 +881,6 @@ const Settings = () => {
         async (
             area
         ) => {
-
             const nextStatus =
                 !area.active;
 
@@ -860,7 +905,6 @@ const Settings = () => {
 
 
             try {
-
                 setAreaStatusUpdatingId(
                     area.id
                 );
@@ -885,24 +929,92 @@ const Settings = () => {
 
 
                 await loadAreas();
-
             } catch (err) {
-
                 console.error(
                     err
                 );
 
 
                 setError(
-                    err.response
-                        ?.data
-                        ?.message ||
-                    "Failed to update area status"
+                    getApiErrorMessage(
+                        err,
+                        "Failed to update area status"
+                    )
+                );
+            } finally {
+                setAreaStatusUpdatingId(
+                    null
+                );
+            }
+        };
+
+
+    /*
+     * Area can be permanently deleted only
+     * when the backend confirms that no
+     * Contributor references it.
+     */
+    const handleAreaDelete =
+        async (
+            area
+        ) => {
+            const shouldDelete =
+                window.confirm(
+                    `Permanently delete area "${area.name}"?\n\n` +
+                    "This is only allowed if the area has never been assigned to a contributor."
                 );
 
-            } finally {
 
-                setAreaStatusUpdatingId(
+            if (
+                !shouldDelete
+            ) {
+                return;
+            }
+
+
+            try {
+                setDeletingAreaId(
+                    area.id
+                );
+
+                setError("");
+
+                setSuccessMessage("");
+
+
+                await deleteArea(
+                    area.id
+                );
+
+
+                if (
+                    editingAreaId ===
+                    area.id
+                ) {
+                    resetAreaForm();
+                }
+
+
+                setSuccessMessage(
+                    `Area "${area.name}" deleted successfully`
+                );
+
+
+                await loadAreas();
+            } catch (err) {
+                console.error(
+                    err
+                );
+
+
+                setError(
+                    getApiErrorMessage(
+                        err,
+                        "Failed to delete area"
+                    )
+                );
+            } finally {
+                setDeletingAreaId(
                     null
                 );
             }
@@ -924,13 +1036,11 @@ const Settings = () => {
     const filteredCategories =
         useMemo(
             () => {
-
                 return expenseCategories
                     .filter(
                         (
                             category
                         ) => {
-
                             const matchesSearch =
                                 !normalizedCategorySearch ||
 
@@ -980,7 +1090,6 @@ const Settings = () => {
                                     second.name
                                 )
                     );
-
             },
             [
                 expenseCategories,
@@ -1005,13 +1114,11 @@ const Settings = () => {
     const filteredAreas =
         useMemo(
             () => {
-
                 return areas
                     .filter(
                         (
                             area
                         ) => {
-
                             const matchesSearch =
                                 !normalizedAreaSearch ||
 
@@ -1061,7 +1168,6 @@ const Settings = () => {
                                     second.name
                                 )
                     );
-
             },
             [
                 areas,
@@ -1109,7 +1215,6 @@ const Settings = () => {
         categorySearchTerm
             .trim() !==
         "" ||
-
         categoryStatusFilter !==
         "ALL";
 
@@ -1118,14 +1223,12 @@ const Settings = () => {
         areaSearchTerm
             .trim() !==
         "" ||
-
         areaStatusFilter !==
         "ALL";
 
 
     const clearCategoryFilters =
         () => {
-
             setCategorySearchTerm(
                 ""
             );
@@ -1138,7 +1241,6 @@ const Settings = () => {
 
     const clearAreaFilters =
         () => {
-
             setAreaSearchTerm(
                 ""
             );
@@ -1150,7 +1252,6 @@ const Settings = () => {
 
 
     return (
-
         <div className="page-container">
 
             <div className="page-header">
@@ -1171,7 +1272,6 @@ const Settings = () => {
 
 
             {error && (
-
                 <div className="error-message">
                     {error}
                 </div>
@@ -1179,7 +1279,6 @@ const Settings = () => {
 
 
             {successMessage && (
-
                 <div className="success-message">
                     {successMessage}
                 </div>
@@ -1268,12 +1367,10 @@ const Settings = () => {
                     <div>
 
                         <h2>
-
                             {editingCategoryId !==
                                 null
                                 ? "Edit Expense Category"
                                 : "Add Expense Category"}
-
                         </h2>
 
                         <p>
@@ -1309,6 +1406,7 @@ const Settings = () => {
                                 null
                             }
                         />
+
 
                         {editingCategoryId !==
                             null && (
@@ -1382,14 +1480,12 @@ const Settings = () => {
                             loadingCategory
                         }
                     >
-
                         {loadingCategory
                             ? "Saving..."
                             : editingCategoryId !==
                                 null
                                 ? "Update Category"
                                 : "Add Category"}
-
                     </button>
 
 
@@ -1448,9 +1544,7 @@ const Settings = () => {
                                 event
                             ) =>
                                 setCategorySearchTerm(
-                                    event
-                                        .target
-                                        .value
+                                    event.target.value
                                 )
                         }
                     />
@@ -1466,9 +1560,7 @@ const Settings = () => {
                                 event
                             ) =>
                                 setCategoryStatusFilter(
-                                    event
-                                        .target
-                                        .value
+                                    event.target.value
                                 )
                         }
                     >
@@ -1588,11 +1680,9 @@ const Settings = () => {
                                                             : "settings-status settings-status-inactive"
                                                     }
                                                 >
-
                                                     {category.active
                                                         ? "Active"
                                                         : "Inactive"}
-
                                                 </span>
 
                                             </td>
@@ -1610,6 +1700,10 @@ const Settings = () => {
                                                                 handleCategoryEdit(
                                                                     category
                                                                 )
+                                                        }
+                                                        disabled={
+                                                            deletingCategoryId ===
+                                                            category.id
                                                         }
                                                     >
                                                         Edit
@@ -1631,17 +1725,40 @@ const Settings = () => {
                                                         }
                                                         disabled={
                                                             categoryStatusUpdatingId ===
+                                                            category.id ||
+                                                            deletingCategoryId ===
                                                             category.id
                                                         }
                                                     >
-
                                                         {categoryStatusUpdatingId ===
                                                             category.id
                                                             ? "Updating..."
                                                             : category.active
                                                                 ? "Deactivate"
                                                                 : "Activate"}
+                                                    </button>
 
+
+                                                    <button
+                                                        type="button"
+                                                        className="danger-button"
+                                                        onClick={
+                                                            () =>
+                                                                handleCategoryDelete(
+                                                                    category
+                                                                )
+                                                        }
+                                                        disabled={
+                                                            deletingCategoryId ===
+                                                            category.id ||
+                                                            categoryStatusUpdatingId ===
+                                                            category.id
+                                                        }
+                                                    >
+                                                        {deletingCategoryId ===
+                                                            category.id
+                                                            ? "Deleting..."
+                                                            : "Delete"}
                                                     </button>
 
                                                 </div>
@@ -1744,12 +1861,10 @@ const Settings = () => {
                     <div>
 
                         <h2>
-
                             {editingAreaId !==
                                 null
                                 ? "Edit Area"
                                 : "Add Area"}
-
                         </h2>
 
                         <p>
@@ -1785,6 +1900,7 @@ const Settings = () => {
                                 null
                             }
                         />
+
 
                         {editingAreaId !==
                             null && (
@@ -1858,14 +1974,12 @@ const Settings = () => {
                             loadingArea
                         }
                     >
-
                         {loadingArea
                             ? "Saving..."
                             : editingAreaId !==
                                 null
                                 ? "Update Area"
                                 : "Add Area"}
-
                     </button>
 
 
@@ -1924,9 +2038,7 @@ const Settings = () => {
                                 event
                             ) =>
                                 setAreaSearchTerm(
-                                    event
-                                        .target
-                                        .value
+                                    event.target.value
                                 )
                         }
                     />
@@ -1942,9 +2054,7 @@ const Settings = () => {
                                 event
                             ) =>
                                 setAreaStatusFilter(
-                                    event
-                                        .target
-                                        .value
+                                    event.target.value
                                 )
                         }
                     >
@@ -2064,11 +2174,9 @@ const Settings = () => {
                                                             : "settings-status settings-status-inactive"
                                                     }
                                                 >
-
                                                     {area.active
                                                         ? "Active"
                                                         : "Inactive"}
-
                                                 </span>
 
                                             </td>
@@ -2086,6 +2194,10 @@ const Settings = () => {
                                                                 handleAreaEdit(
                                                                     area
                                                                 )
+                                                        }
+                                                        disabled={
+                                                            deletingAreaId ===
+                                                            area.id
                                                         }
                                                     >
                                                         Edit
@@ -2107,17 +2219,40 @@ const Settings = () => {
                                                         }
                                                         disabled={
                                                             areaStatusUpdatingId ===
+                                                            area.id ||
+                                                            deletingAreaId ===
                                                             area.id
                                                         }
                                                     >
-
                                                         {areaStatusUpdatingId ===
                                                             area.id
                                                             ? "Updating..."
                                                             : area.active
                                                                 ? "Deactivate"
                                                                 : "Activate"}
+                                                    </button>
 
+
+                                                    <button
+                                                        type="button"
+                                                        className="danger-button"
+                                                        onClick={
+                                                            () =>
+                                                                handleAreaDelete(
+                                                                    area
+                                                                )
+                                                        }
+                                                        disabled={
+                                                            deletingAreaId ===
+                                                            area.id ||
+                                                            areaStatusUpdatingId ===
+                                                            area.id
+                                                        }
+                                                    >
+                                                        {deletingAreaId ===
+                                                            area.id
+                                                            ? "Deleting..."
+                                                            : "Delete"}
                                                     </button>
 
                                                 </div>

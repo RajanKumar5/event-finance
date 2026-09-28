@@ -1,23 +1,32 @@
 package com.eventfinance.backend.masterdata.area;
 
 import com.eventfinance.backend.common.exception.ResourceNotFoundException;
+import com.eventfinance.backend.contributor.ContributorRepository;
 import com.eventfinance.backend.masterdata.area.dto.AreaMasterRequest;
 import com.eventfinance.backend.masterdata.area.dto.AreaMasterResponse;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+
 
 @Service
 public class AreaMasterService {
 
     private final AreaMasterRepository repository;
 
+    private final ContributorRepository contributorRepository;
+
 
     public AreaMasterService(
-            AreaMasterRepository repository
+            AreaMasterRepository repository,
+            ContributorRepository contributorRepository
     ) {
         this.repository = repository;
+        this.contributorRepository =
+                contributorRepository;
     }
 
 
@@ -53,13 +62,16 @@ public class AreaMasterService {
         AreaMaster area =
                 new AreaMaster();
 
+
         area.setCode(
                 code
         );
 
+
         area.setName(
                 name
         );
+
 
         area.setActive(
                 request.active()
@@ -139,13 +151,14 @@ public class AreaMasterService {
 
 
         /*
-         * Code stays immutable.
+         * Area code stays immutable.
          */
         area.setName(
                 normalizeName(
                         request.name()
                 )
         );
+
 
         area.setActive(
                 request.active()
@@ -181,6 +194,45 @@ public class AreaMasterService {
                 repository.save(
                         area
                 )
+        );
+    }
+
+
+    /*
+     * Permanently delete an Area only when
+     * no Contributor references it.
+     */
+    @Transactional
+    public void delete(
+            Long id
+    ) {
+
+        AreaMaster area =
+                getEntity(
+                        id
+                );
+
+
+        boolean used =
+                contributorRepository
+                        .existsByAreaMasterId(
+                                id
+                        );
+
+
+        if (used) {
+
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Area \""
+                            + area.getName()
+                            + "\" cannot be deleted because it is already assigned to one or more contributors."
+            );
+        }
+
+
+        repository.delete(
+                area
         );
     }
 

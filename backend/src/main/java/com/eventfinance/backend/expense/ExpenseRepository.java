@@ -20,4 +20,16 @@ public interface ExpenseRepository
     boolean existsByEventId(
             Long eventId
     );
+
+
+    /*
+     * Used before deleting an expense category.
+     *
+     * If at least one Expense references the
+     * category, the master record must not
+     * be deleted.
+     */
+    boolean existsByCategoryMasterId(
+            Long categoryId
+    );
 }

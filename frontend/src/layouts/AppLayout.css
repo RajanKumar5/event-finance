@@ -12,6 +12,139 @@
 
 
 /* =========================
+   Logged-in User / Desktop
+   ========================= */
+
+.sidebar {
+    display: flex;
+    flex-direction: column;
+
+    height: 100vh;
+
+    overflow: hidden;
+}
+
+
+.sidebar-nav {
+    flex: 1;
+
+    min-height: 0;
+
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    padding-right: 4px;
+}
+
+
+.sidebar-nav::-webkit-scrollbar {
+    width: 5px;
+}
+
+
+.sidebar-nav::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+
+.sidebar-nav::-webkit-scrollbar-thumb {
+    background: #475569;
+
+    border-radius: 10px;
+}
+
+
+.sidebar-nav::-webkit-scrollbar-thumb:hover {
+    background: #64748b;
+}
+
+
+.sidebar-account {
+    flex-shrink: 0;
+
+    margin-top: 16px;
+    padding-top: 16px;
+
+    border-top:
+        1px solid rgba(255, 255, 255, 0.12);
+}
+
+
+.sidebar-user-info {
+    margin-bottom: 12px;
+}
+
+
+.sidebar-user-name {
+    color: white;
+
+    font-size: 14px;
+    font-weight: 600;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+
+.sidebar-user-role {
+    margin-top: 4px;
+
+    color: #94a3b8;
+
+    font-size: 11px;
+    font-weight: 600;
+
+    letter-spacing: 0.06em;
+}
+
+
+.sidebar-logout-button {
+    width: 100%;
+
+    padding: 9px 12px;
+
+    border:
+        1px solid rgba(255, 255, 255, 0.18);
+
+    border-radius: 8px;
+
+    background: transparent;
+
+    color: #cbd5e1;
+
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition:
+        background 0.15s ease,
+        color 0.15s ease,
+        border-color 0.15s ease;
+}
+
+
+.sidebar-logout-button:hover {
+    background: #dc2626;
+
+    border-color: #dc2626;
+
+    color: white;
+}
+
+
+/* =========================
+   Mobile Account
+   ========================= */
+
+.mobile-account-bar {
+    display: none;
+}
+
+
+/* =========================
    Mobile Navigation
    ========================= */
 
@@ -41,12 +174,20 @@
                 23,
                 42,
                 0.18);
+
+        /*
+         * Undo desktop sidebar
+         * overflow restrictions.
+         */
+        overflow: visible;
     }
+
 
     .sidebar-logo,
     .desktop-event-selector {
         display: none;
     }
+
 
     .sidebar-nav {
         display: flex;
@@ -57,6 +198,14 @@
         gap: 5px;
 
         width: 100%;
+
+        /*
+         * Undo desktop vertical
+         * scrolling behavior.
+         */
+        flex: initial;
+
+        min-height: auto;
 
         overflow-x: auto;
         overflow-y: hidden;
@@ -71,9 +220,11 @@
             x proximity;
     }
 
+
     .sidebar-nav::-webkit-scrollbar {
         display: none;
     }
+
 
     .sidebar-nav a {
         flex:
@@ -96,6 +247,7 @@
             start;
     }
 
+
     .sidebar-nav a.active {
         background:
             var(--sidebar-active);
@@ -109,17 +261,98 @@
                 0.3);
     }
 
+
     .nav-label-desktop {
         display: none;
     }
+
 
     .nav-label-mobile {
         display: inline;
     }
 
+
+    .sidebar-account {
+        display: none;
+    }
+
+
     .app-content {
         padding-bottom: 74px;
     }
+
+
+    .mobile-account-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        gap: 16px;
+
+        margin: 12px 16px 0;
+        padding: 12px 14px;
+
+        border:
+            1px solid var(--border);
+
+        border-radius: 10px;
+
+        background: white;
+
+        box-shadow:
+            var(--shadow-card);
+    }
+
+
+    .mobile-user-name {
+        color:
+            var(--text-primary);
+
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+
+    .mobile-user-role {
+        margin-top: 3px;
+
+        color:
+            var(--text-secondary);
+
+        font-size: 11px;
+        font-weight: 600;
+
+        letter-spacing: 0.05em;
+    }
+
+
+    .mobile-logout-button {
+        padding: 8px 12px;
+
+        border:
+            1px solid #fecaca;
+
+        border-radius: 8px;
+
+        background:
+            #fee2e2;
+
+        color:
+            #b91c1c;
+
+        font-family: inherit;
+        font-size: 13px;
+        font-weight: 600;
+
+        cursor: pointer;
+    }
+
+
+    .mobile-logout-button:hover {
+        background:
+            #fecaca;
+    }
+
 
     .mobile-event-selector {
         display: block;
@@ -139,6 +372,7 @@
             var(--shadow-card);
     }
 
+
     .mobile-event-selector label {
         display: block;
 
@@ -150,6 +384,7 @@
         font-size: 12px;
         font-weight: 600;
     }
+
 
     .mobile-event-selector select {
         width: 100%;
@@ -169,6 +404,7 @@
         font-family: inherit;
         font-size: 13px;
     }
+
 
     .mobile-event-selector .event-selector-message {
         color:
@@ -191,6 +427,7 @@
 
         font-size: 10.5px;
     }
+
 
     .app-content {
         padding-bottom: 70px;

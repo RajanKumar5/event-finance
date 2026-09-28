@@ -86,6 +86,17 @@ export const updateExpenseCategoryStatus =
     };
 
 
+export const deleteExpenseCategory =
+    async (
+        id
+    ) => {
+
+        await apiClient.delete(
+            `/master/expense-categories/${id}`
+        );
+    };
+
+
 /*
  * Areas
  */
@@ -168,4 +179,15 @@ export const updateAreaStatus =
 
 
         return response.data;
+    };
+
+
+export const deleteArea =
+    async (
+        id
+    ) => {
+
+        await apiClient.delete(
+            `/master/areas/${id}`
+        );
     };

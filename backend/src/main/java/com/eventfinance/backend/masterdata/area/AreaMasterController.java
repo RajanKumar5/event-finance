@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+
 @RestController
 @RequestMapping(
         "/api/v1/master/areas"
@@ -21,7 +22,8 @@ public class AreaMasterController {
     public AreaMasterController(
             AreaMasterService service
     ) {
-        this.service = service;
+        this.service =
+                service;
     }
 
 
@@ -114,5 +116,26 @@ public class AreaMasterController {
                         active
                 )
         );
+    }
+
+
+    /*
+     * DELETE
+     * /api/v1/master/areas/{id}
+     */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(
+            @PathVariable
+            Long id
+    ) {
+
+        service.delete(
+                id
+        );
+
+
+        return ResponseEntity
+                .noContent()
+                .build();
     }
 }

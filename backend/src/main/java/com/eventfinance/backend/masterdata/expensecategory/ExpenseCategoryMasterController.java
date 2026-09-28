@@ -136,4 +136,25 @@ public class ExpenseCategoryMasterController {
                 )
         );
     }
+
+
+    /*
+     * DELETE
+     * /api/v1/master/expense-categories/{id}
+     */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(
+            @PathVariable
+            Long id
+    ) {
+
+        service.delete(
+                id
+        );
+
+
+        return ResponseEntity
+                .noContent()
+                .build();
+    }
 }

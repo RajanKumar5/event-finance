@@ -14,6 +14,10 @@ import {
     useEvent,
 } from "../context/EventContext";
 
+import {
+    useAuth,
+} from "../context/AuthContext";
+
 
 const emptyForm = {
     name: "",
@@ -26,6 +30,9 @@ const emptyForm = {
 
 
 const Events = () => {
+    const {
+        canEdit,
+    } = useAuth();
 
     const {
         refreshEvents,
@@ -71,34 +78,25 @@ const Events = () => {
 
 
     useEffect(() => {
-
         loadEvents();
-
     }, []);
 
 
     const loadEvents =
         async () => {
-
             try {
-
                 setError("");
-
 
                 const data =
                     await getAllEvents();
 
-
                 setEvents(
                     data
                 );
-
             } catch (err) {
-
                 console.error(
                     err
                 );
-
 
                 setError(
                     err.response
@@ -112,12 +110,10 @@ const Events = () => {
 
     const handleChange =
         (event) => {
-
             const {
                 name,
                 value,
             } = event.target;
-
 
             setForm(
                 (previous) => ({
@@ -132,7 +128,6 @@ const Events = () => {
 
     const resetForm =
         () => {
-
             setForm(
                 emptyForm
             );
@@ -145,6 +140,16 @@ const Events = () => {
 
     const handleEdit =
         (event) => {
+            if (
+                !canEdit
+            ) {
+                setError(
+                    "You have read-only access. You cannot add, edit, or delete records."
+                );
+
+                return;
+            }
+
 
             setEditingId(
                 event.id
@@ -175,14 +180,15 @@ const Events = () => {
 
             window.scrollTo({
                 top: 0,
-                behavior: "smooth",
+
+                behavior:
+                    "smooth",
             });
         };
 
 
     const handleCancelEdit =
         () => {
-
             resetForm();
 
             setError("");
@@ -193,12 +199,21 @@ const Events = () => {
         async (
             event
         ) => {
-
             event.preventDefault();
 
 
-            try {
+            if (
+                !canEdit
+            ) {
+                setError(
+                    "You have read-only access. You cannot add, edit, or delete records."
+                );
 
+                return;
+            }
+
+
+            try {
                 setLoading(
                     true
                 );
@@ -207,7 +222,6 @@ const Events = () => {
 
 
                 const request = {
-
                     name:
                         form.name,
 
@@ -237,14 +251,11 @@ const Events = () => {
                     editingId !==
                     null
                 ) {
-
                     await updateEvent(
                         editingId,
                         request
                     );
-
                 } else {
-
                     await createEvent(
                         request
                     );
@@ -257,9 +268,7 @@ const Events = () => {
                 await loadEvents();
 
                 await refreshEvents();
-
             } catch (err) {
-
                 console.error(
                     err
                 );
@@ -269,7 +278,6 @@ const Events = () => {
                     err.response
                         ?.data
                         ?.message ||
-
                     (
                         editingId !==
                             null
@@ -281,9 +289,7 @@ const Events = () => {
                 setError(
                     message
                 );
-
             } finally {
-
                 setLoading(
                     false
                 );
@@ -295,6 +301,16 @@ const Events = () => {
         async (
             id
         ) => {
+            if (
+                !canEdit
+            ) {
+                setError(
+                    "You have read-only access. You cannot add, edit, or delete records."
+                );
+
+                return;
+            }
+
 
             const shouldDelete =
                 window.confirm(
@@ -305,13 +321,11 @@ const Events = () => {
             if (
                 !shouldDelete
             ) {
-
                 return;
             }
 
 
             try {
-
                 setDeletingId(
                     id
                 );
@@ -328,7 +342,6 @@ const Events = () => {
                     editingId ===
                     id
                 ) {
-
                     resetForm();
                 }
 
@@ -336,9 +349,7 @@ const Events = () => {
                 await loadEvents();
 
                 await refreshEvents();
-
             } catch (err) {
-
                 console.error(
                     err
                 );
@@ -350,9 +361,7 @@ const Events = () => {
                         ?.message ||
                     "Failed to delete event"
                 );
-
             } finally {
-
                 setDeletingId(
                     null
                 );
@@ -361,7 +370,6 @@ const Events = () => {
 
 
     return (
-
         <div className="page-container">
 
             <div className="page-header">
@@ -370,251 +378,262 @@ const Events = () => {
                     Events
                 </h1>
 
+
                 <p>
-                    Create and manage festival events
+                    {canEdit
+                        ? "Create and manage festival events"
+                        : "View festival events"}
                 </p>
 
             </div>
 
 
-            <form
-                className="form-card"
-                onSubmit={
-                    handleSubmit
-                }
-            >
+            {!canEdit && (
 
-                <h2>
-
-                    {editingId !==
-                        null
-                        ? "Edit Event"
-                        : "Add Event"}
-
-                </h2>
-
-
-                <div className="form-grid">
-
-                    <div className="form-field form-field-full">
-
-                        <label>
-                            Event Name
-                        </label>
-
-
-                        <input
-                            name="name"
-                            placeholder="Example: Ganesh Chaturthi 2026"
-                            value={
-                                form.name
-                            }
-                            onChange={
-                                handleChange
-                            }
-                            required
-                        />
-
-                    </div>
-
-
-                    <div className="form-field">
-
-                        <label>
-                            Event Type
-                        </label>
-
-
-                        <select
-                            name="eventType"
-                            value={
-                                form.eventType
-                            }
-                            onChange={
-                                handleChange
-                            }
-                        >
-
-                            <option value="GANESH_CHATURTHI">
-                                Ganesh Chaturthi
-                            </option>
-
-
-                            <option value="NAVRATRI">
-                                Navratri
-                            </option>
-
-
-                            <option value="DURGA_PUJA">
-                                Durga Puja
-                            </option>
-
-
-                            <option value="DIWALI">
-                                Diwali
-                            </option>
-
-
-                            <option value="OTHER">
-                                Other
-                            </option>
-
-                        </select>
-
-                    </div>
-
-
-                    <div className="form-field">
-
-                        <label>
-                            Status
-                        </label>
-
-
-                        <select
-                            name="status"
-                            value={
-                                form.status
-                            }
-                            onChange={
-                                handleChange
-                            }
-                        >
-
-                            <option value="PLANNING">
-                                Planning
-                            </option>
-
-
-                            <option value="ACTIVE">
-                                Active
-                            </option>
-
-
-                            <option value="COMPLETED">
-                                Completed
-                            </option>
-
-
-                            <option value="ARCHIVED">
-                                Archived
-                            </option>
-
-                        </select>
-
-                    </div>
-
-
-                    <div className="form-field">
-
-                        <label>
-                            Start Date
-                        </label>
-
-
-                        <input
-                            type="date"
-                            name="startDate"
-                            value={
-                                form.startDate
-                            }
-                            onChange={
-                                handleChange
-                            }
-                            required
-                        />
-
-                    </div>
-
-
-                    <div className="form-field">
-
-                        <label>
-                            End Date
-                        </label>
-
-
-                        <input
-                            type="date"
-                            name="endDate"
-                            value={
-                                form.endDate
-                            }
-                            onChange={
-                                handleChange
-                            }
-                            required
-                        />
-
-                    </div>
-
-
-                    <div className="form-field">
-
-                        <label>
-                            Budget
-                        </label>
-
-
-                        <input
-                            type="number"
-                            name="budget"
-                            placeholder="Budget"
-                            value={
-                                form.budget
-                            }
-                            onChange={
-                                handleChange
-                            }
-                            min="0"
-                            step="0.01"
-                        />
-
-                    </div>
-
+                <div className="info-message">
+                    You have read-only access. You can view events,
+                    but you cannot add, edit, or delete records.
                 </div>
+            )}
 
 
-                <div className="form-actions">
+            {canEdit && (
 
-                    <button
-                        className="primary-button"
-                        type="submit"
-                        disabled={
-                            loading
-                        }
-                    >
+                <form
+                    className="form-card"
+                    onSubmit={
+                        handleSubmit
+                    }
+                >
 
-                        {loading
-                            ? "Saving..."
-                            : editingId !==
-                                null
-                                ? "Update Event"
-                                : "Add Event"}
-
-                    </button>
+                    <h2>
+                        {editingId !==
+                            null
+                            ? "Edit Event"
+                            : "Add Event"}
+                    </h2>
 
 
-                    {editingId !==
-                        null && (
+                    <div className="form-grid">
 
-                            <button
-                                type="button"
-                                className="secondary-button"
-                                onClick={
-                                    handleCancelEdit
+                        <div className="form-field form-field-full">
+
+                            <label>
+                                Event Name
+                            </label>
+
+
+                            <input
+                                name="name"
+                                placeholder="Example: Ganesh Chaturthi 2026"
+                                value={
+                                    form.name
                                 }
-                                disabled={
-                                    loading
+                                onChange={
+                                    handleChange
+                                }
+                                required
+                            />
+
+                        </div>
+
+
+                        <div className="form-field">
+
+                            <label>
+                                Event Type
+                            </label>
+
+
+                            <select
+                                name="eventType"
+                                value={
+                                    form.eventType
+                                }
+                                onChange={
+                                    handleChange
                                 }
                             >
-                                Cancel
-                            </button>
-                        )}
 
-                </div>
+                                <option value="GANESH_CHATURTHI">
+                                    Ganesh Chaturthi
+                                </option>
 
-            </form>
+
+                                <option value="NAVRATRI">
+                                    Navratri
+                                </option>
+
+
+                                <option value="DURGA_PUJA">
+                                    Durga Puja
+                                </option>
+
+
+                                <option value="DIWALI">
+                                    Diwali
+                                </option>
+
+
+                                <option value="OTHER">
+                                    Other
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div className="form-field">
+
+                            <label>
+                                Status
+                            </label>
+
+
+                            <select
+                                name="status"
+                                value={
+                                    form.status
+                                }
+                                onChange={
+                                    handleChange
+                                }
+                            >
+
+                                <option value="PLANNING">
+                                    Planning
+                                </option>
+
+
+                                <option value="ACTIVE">
+                                    Active
+                                </option>
+
+
+                                <option value="COMPLETED">
+                                    Completed
+                                </option>
+
+
+                                <option value="ARCHIVED">
+                                    Archived
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div className="form-field">
+
+                            <label>
+                                Start Date
+                            </label>
+
+
+                            <input
+                                type="date"
+                                name="startDate"
+                                value={
+                                    form.startDate
+                                }
+                                onChange={
+                                    handleChange
+                                }
+                                required
+                            />
+
+                        </div>
+
+
+                        <div className="form-field">
+
+                            <label>
+                                End Date
+                            </label>
+
+
+                            <input
+                                type="date"
+                                name="endDate"
+                                value={
+                                    form.endDate
+                                }
+                                onChange={
+                                    handleChange
+                                }
+                                required
+                            />
+
+                        </div>
+
+
+                        <div className="form-field">
+
+                            <label>
+                                Budget
+                            </label>
+
+
+                            <input
+                                type="number"
+                                name="budget"
+                                placeholder="Budget"
+                                value={
+                                    form.budget
+                                }
+                                onChange={
+                                    handleChange
+                                }
+                                min="0"
+                                step="0.01"
+                            />
+
+                        </div>
+
+                    </div>
+
+
+                    <div className="form-actions">
+
+                        <button
+                            className="primary-button"
+                            type="submit"
+                            disabled={
+                                loading
+                            }
+                        >
+                            {loading
+                                ? "Saving..."
+                                : editingId !==
+                                    null
+                                    ? "Update Event"
+                                    : "Add Event"}
+                        </button>
+
+
+                        {editingId !==
+                            null && (
+
+                                <button
+                                    type="button"
+                                    className="secondary-button"
+                                    onClick={
+                                        handleCancelEdit
+                                    }
+                                    disabled={
+                                        loading
+                                    }
+                                >
+                                    Cancel
+                                </button>
+                            )}
+
+                    </div>
+
+                </form>
+            )}
 
 
             {error && (
@@ -653,29 +672,38 @@ const Events = () => {
                                         Name
                                     </th>
 
+
                                     <th>
                                         Type
                                     </th>
+
 
                                     <th>
                                         Start
                                     </th>
 
+
                                     <th>
                                         End
                                     </th>
+
 
                                     <th>
                                         Budget
                                     </th>
 
+
                                     <th>
                                         Status
                                     </th>
 
-                                    <th>
-                                        Actions
-                                    </th>
+
+                                    {canEdit && (
+
+                                        <th>
+                                            Actions
+                                        </th>
+                                    )}
 
                                 </tr>
 
@@ -703,12 +731,10 @@ const Events = () => {
 
 
                                             <td>
-
                                                 {event.eventType.replaceAll(
                                                     "_",
                                                     " "
                                                 )}
-
                                             </td>
 
 
@@ -727,12 +753,10 @@ const Events = () => {
 
 
                                             <td>
-
                                                 {event.budget !=
                                                     null
                                                     ? `₹${event.budget}`
                                                     : "-"}
-
                                             </td>
 
 
@@ -743,59 +767,58 @@ const Events = () => {
                                                         `status-badge status-${event.status.toLowerCase()}`
                                                     }
                                                 >
-
                                                     {
                                                         event.status
                                                     }
-
                                                 </span>
 
                                             </td>
 
 
-                                            <td>
+                                            {canEdit && (
 
-                                                <div className="table-actions">
+                                                <td>
 
-                                                    <button
-                                                        type="button"
-                                                        className="secondary-button"
-                                                        onClick={
-                                                            () =>
-                                                                handleEdit(
-                                                                    event
-                                                                )
-                                                        }
-                                                    >
-                                                        Edit
-                                                    </button>
+                                                    <div className="table-actions">
+
+                                                        <button
+                                                            type="button"
+                                                            className="secondary-button"
+                                                            onClick={
+                                                                () =>
+                                                                    handleEdit(
+                                                                        event
+                                                                    )
+                                                            }
+                                                        >
+                                                            Edit
+                                                        </button>
 
 
-                                                    <button
-                                                        type="button"
-                                                        className="danger-button"
-                                                        onClick={
-                                                            () =>
-                                                                handleDelete(
-                                                                    event.id
-                                                                )
-                                                        }
-                                                        disabled={
-                                                            deletingId ===
-                                                            event.id
-                                                        }
-                                                    >
+                                                        <button
+                                                            type="button"
+                                                            className="danger-button"
+                                                            onClick={
+                                                                () =>
+                                                                    handleDelete(
+                                                                        event.id
+                                                                    )
+                                                            }
+                                                            disabled={
+                                                                deletingId ===
+                                                                event.id
+                                                            }
+                                                        >
+                                                            {deletingId ===
+                                                                event.id
+                                                                ? "Deleting..."
+                                                                : "Delete"}
+                                                        </button>
 
-                                                        {deletingId ===
-                                                            event.id
-                                                            ? "Deleting..."
-                                                            : "Delete"}
+                                                    </div>
 
-                                                    </button>
-
-                                                </div>
-
-                                            </td>
+                                                </td>
+                                            )}
 
                                         </tr>
                                     )

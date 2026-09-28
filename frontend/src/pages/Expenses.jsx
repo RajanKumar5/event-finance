@@ -15,34 +15,30 @@ import {
 } from "../api/masterDataApi";
 
 import { useEvent } from "../context/EventContext";
+import { useAuth } from "../context/AuthContext";
 
 
 const createEmptyForm = (
     defaultCategory = ""
 ) => ({
     category: defaultCategory,
-
     description: "",
-
     vendorName: "",
-
     amount: "",
-
     expenseDate: new Date()
         .toISOString()
         .split("T")[0],
-
     paymentMode: "CASH",
-
     paidBy: "",
-
     paymentReference: "",
-
     notes: "",
 });
 
 
 const Expenses = () => {
+    const {
+        canEdit,
+    } = useAuth();
 
     const {
         selectedEventId,
@@ -149,14 +145,12 @@ const Expenses = () => {
     const getDefaultCategory = (
         categories = expenseCategories
     ) => {
-
         if (
             !categories ||
             categories.length === 0
         ) {
             return "";
         }
-
 
         return categories[0].code;
     };
@@ -165,7 +159,6 @@ const Expenses = () => {
     const getCategoryName = (
         categoryCode
     ) => {
-
         const category =
             expenseCategories.find(
                 (item) =>
@@ -173,11 +166,9 @@ const Expenses = () => {
                     categoryCode
             );
 
-
         if (category) {
             return category.name;
         }
-
 
         return (
             categoryCode
@@ -191,40 +182,31 @@ const Expenses = () => {
 
     const loadCategories =
         async () => {
-
             try {
-
                 setLoadingCategories(
                     true
                 );
 
-
                 const data =
                     await getActiveExpenseCategories();
-
 
                 setExpenseCategories(
                     data
                 );
 
-
                 if (
                     data.length > 0
                 ) {
-
                     setForm(
                         (previous) => {
-
                             if (
                                 previous.category
                             ) {
                                 return previous;
                             }
 
-
                             return {
                                 ...previous,
-
                                 category:
                                     data[0]
                                         .code,
@@ -232,20 +214,17 @@ const Expenses = () => {
                         }
                     );
                 }
-
             } catch (err) {
-
-                console.error(err);
-
+                console.error(
+                    err
+                );
 
                 setError(
                     err.response?.data
                         ?.message ||
                     "Failed to load expense categories"
                 );
-
             } finally {
-
                 setLoadingCategories(
                     false
                 );
@@ -257,39 +236,32 @@ const Expenses = () => {
         async (
             eventId
         ) => {
-
             try {
-
                 setLoadingExpenses(
                     true
                 );
 
                 setError("");
 
-
                 const data =
                     await getExpensesByEvent(
                         eventId
                     );
 
-
                 setExpenses(
                     data
                 );
-
             } catch (err) {
-
-                console.error(err);
-
+                console.error(
+                    err
+                );
 
                 setError(
                     err.response?.data
                         ?.message ||
                     "Failed to load expenses"
                 );
-
             } finally {
-
                 setLoadingExpenses(
                     false
                 );
@@ -298,13 +270,11 @@ const Expenses = () => {
 
 
     const resetForm = () => {
-
         setForm(
             createEmptyForm(
                 getDefaultCategory()
             )
         );
-
 
         setEditingId(
             null
@@ -313,48 +283,39 @@ const Expenses = () => {
 
 
     useEffect(() => {
-
         loadCategories();
-
     }, []);
 
 
     useEffect(() => {
-
         resetForm();
 
-
-        setSearchTerm(
-            ""
-        );
-
+        setSearchTerm("");
 
         setCategoryFilter(
             "ALL"
         );
 
-
         setPaymentModeFilter(
             "ALL"
         );
 
-
-        setDateFilter(
-            ""
-        );
-
+        setDateFilter("");
 
         setSortConfig({
-            key: "expenseDate",
-            direction: "desc",
+            key:
+                "expenseDate",
+            direction:
+                "desc",
         });
 
 
         if (
             !selectedEventId
         ) {
-
-            setExpenses([]);
+            setExpenses(
+                []
+            );
 
             return;
         }
@@ -363,25 +324,23 @@ const Expenses = () => {
         loadExpenses(
             selectedEventId
         );
-
-    }, [selectedEventId]);
+    }, [
+        selectedEventId,
+    ]);
 
 
     useEffect(() => {
-
         if (
             editingId !== null
         ) {
             return;
         }
 
-
         if (
             !form.category &&
             expenseCategories.length >
             0
         ) {
-
             setForm(
                 (previous) => ({
                     ...previous,
@@ -392,7 +351,6 @@ const Expenses = () => {
                 })
             );
         }
-
     }, [
         expenseCategories,
         editingId,
@@ -403,18 +361,17 @@ const Expenses = () => {
     const handleChange = (
         event
     ) => {
-
         const {
             name,
             value,
-        } = event.target;
-
+        } =
+            event.target;
 
         setForm(
             (previous) => ({
                 ...previous,
-
-                [name]: value,
+                [name]:
+                    value,
             })
         );
     };
@@ -423,6 +380,16 @@ const Expenses = () => {
     const handleEdit = (
         expense
     ) => {
+        if (
+            !canEdit
+        ) {
+            setError(
+                "You have read-only access. You cannot add, edit, or delete records."
+            );
+
+            return;
+        }
+
 
         if (
             eventReadOnly
@@ -433,14 +400,12 @@ const Expenses = () => {
 
         setError("");
 
-
         setEditingId(
             expense.id
         );
 
 
         setForm({
-
             category:
                 expense.category ||
                 "",
@@ -480,15 +445,17 @@ const Expenses = () => {
 
 
         window.scrollTo({
-            top: 0,
-            behavior: "smooth",
+            top:
+                0,
+
+            behavior:
+                "smooth",
         });
     };
 
 
     const handleCancelEdit =
         () => {
-
             setError("");
 
             resetForm();
@@ -499,14 +466,23 @@ const Expenses = () => {
         async (
             event
         ) => {
-
             event.preventDefault();
+
+
+            if (
+                !canEdit
+            ) {
+                setError(
+                    "You have read-only access. You cannot add, edit, or delete records."
+                );
+
+                return;
+            }
 
 
             if (
                 !selectedEventId
             ) {
-
                 setError(
                     "Please select an event first"
                 );
@@ -518,7 +494,6 @@ const Expenses = () => {
             if (
                 eventReadOnly
             ) {
-
                 setError(
                     "Financial records cannot be modified for a completed or archived event"
                 );
@@ -530,7 +505,6 @@ const Expenses = () => {
             if (
                 !form.category
             ) {
-
                 setError(
                     "Please select an expense category"
                 );
@@ -540,7 +514,6 @@ const Expenses = () => {
 
 
             try {
-
                 setLoading(
                     true
                 );
@@ -549,7 +522,6 @@ const Expenses = () => {
 
 
                 const request = {
-
                     eventId:
                         Number(
                             selectedEventId
@@ -581,8 +553,7 @@ const Expenses = () => {
                         null,
 
                     paymentReference:
-                        form
-                            .paymentReference ||
+                        form.paymentReference ||
                         null,
 
                     notes:
@@ -595,14 +566,11 @@ const Expenses = () => {
                     editingId !==
                     null
                 ) {
-
                     await updateExpense(
                         editingId,
                         request
                     );
-
                 } else {
-
                     await createExpense(
                         request
                     );
@@ -615,10 +583,10 @@ const Expenses = () => {
                 await loadExpenses(
                     selectedEventId
                 );
-
             } catch (err) {
-
-                console.error(err);
+                console.error(
+                    err
+                );
 
 
                 const message =
@@ -627,9 +595,7 @@ const Expenses = () => {
                     (
                         editingId !==
                             null
-
                             ? "Failed to update expense"
-
                             : "Failed to create expense"
                     );
 
@@ -637,9 +603,7 @@ const Expenses = () => {
                 setError(
                     message
                 );
-
             } finally {
-
                 setLoading(
                     false
                 );
@@ -651,11 +615,20 @@ const Expenses = () => {
         async (
             id
         ) => {
+            if (
+                !canEdit
+            ) {
+                setError(
+                    "You have read-only access. You cannot add, edit, or delete records."
+                );
+
+                return;
+            }
+
 
             if (
                 eventReadOnly
             ) {
-
                 setError(
                     "Financial records cannot be modified for a completed or archived event"
                 );
@@ -678,7 +651,6 @@ const Expenses = () => {
 
 
             try {
-
                 setDeletingId(
                     id
                 );
@@ -695,7 +667,6 @@ const Expenses = () => {
                     editingId ===
                     id
                 ) {
-
                     resetForm();
                 }
 
@@ -703,10 +674,10 @@ const Expenses = () => {
                 await loadExpenses(
                     selectedEventId
                 );
-
             } catch (err) {
-
-                console.error(err);
+                console.error(
+                    err
+                );
 
 
                 const message =
@@ -718,9 +689,7 @@ const Expenses = () => {
                 setError(
                     message
                 );
-
             } finally {
-
                 setDeletingId(
                     null
                 );
@@ -731,15 +700,12 @@ const Expenses = () => {
     const handleSort = (
         key
     ) => {
-
         setSortConfig(
             (previous) => {
-
                 if (
                     previous.key ===
                     key
                 ) {
-
                     return {
                         key,
 
@@ -747,9 +713,7 @@ const Expenses = () => {
                             previous
                                 .direction ===
                                 "asc"
-
                                 ? "desc"
-
                                 : "asc",
                     };
                 }
@@ -757,7 +721,8 @@ const Expenses = () => {
 
                 return {
                     key,
-                    direction: "asc",
+                    direction:
+                        "asc",
                 };
             }
         );
@@ -767,7 +732,6 @@ const Expenses = () => {
     const getSortIndicator = (
         key
     ) => {
-
         if (
             sortConfig.key !==
             key
@@ -778,14 +742,10 @@ const Expenses = () => {
 
         return (
             <span className="sort-indicator">
-                {
-                    sortConfig.direction ===
-                        "asc"
-
-                        ? "↑"
-
-                        : "↓"
-                }
+                {sortConfig.direction ===
+                    "asc"
+                    ? "↑"
+                    : "↓"}
             </span>
         );
     };
@@ -800,18 +760,15 @@ const Expenses = () => {
     const filteredExpenses =
         expenses.filter(
             (expense) => {
-
                 const description =
                     expense.description
                         ?.toLowerCase() ||
                     "";
 
-
                 const vendorName =
                     expense.vendorName
                         ?.toLowerCase() ||
                     "";
-
 
                 const paidBy =
                     expense.paidBy
@@ -821,15 +778,12 @@ const Expenses = () => {
 
                 const matchesSearch =
                     !normalizedSearch ||
-
                     description.includes(
                         normalizedSearch
                     ) ||
-
                     vendorName.includes(
                         normalizedSearch
                     ) ||
-
                     paidBy.includes(
                         normalizedSearch
                     );
@@ -838,7 +792,6 @@ const Expenses = () => {
                 const matchesCategory =
                     categoryFilter ===
                     "ALL" ||
-
                     expense.category ===
                     categoryFilter;
 
@@ -846,14 +799,12 @@ const Expenses = () => {
                 const matchesPaymentMode =
                     paymentModeFilter ===
                     "ALL" ||
-
                     expense.paymentMode ===
                     paymentModeFilter;
 
 
                 const matchesDate =
                     !dateFilter ||
-
                     expense.expenseDate ===
                     dateFilter;
 
@@ -875,7 +826,6 @@ const Expenses = () => {
             firstExpense,
             secondExpense
         ) => {
-
             let first;
             let second;
 
@@ -884,7 +834,6 @@ const Expenses = () => {
                 sortConfig.key ===
                 "amount"
             ) {
-
                 first =
                     Number(
                         firstExpense
@@ -909,9 +858,7 @@ const Expenses = () => {
                 return (
                     sortConfig.direction ===
                         "asc"
-
                         ? comparison
-
                         : -comparison
                 );
             }
@@ -921,7 +868,6 @@ const Expenses = () => {
                 sortConfig.key ===
                 "expenseDate"
             ) {
-
                 first =
                     firstExpense
                         .expenseDate ||
@@ -943,9 +889,7 @@ const Expenses = () => {
                 return (
                     sortConfig.direction ===
                         "asc"
-
                         ? comparison
-
                         : -comparison
                 );
             }
@@ -955,7 +899,6 @@ const Expenses = () => {
                 sortConfig.key ===
                 "category"
             ) {
-
                 first =
                     getCategoryName(
                         firstExpense.category
@@ -966,14 +909,13 @@ const Expenses = () => {
                     getCategoryName(
                         secondExpense.category
                     );
-
             } else {
-
                 first =
                     String(
                         firstExpense[
                         sortConfig.key
-                        ] ?? ""
+                        ] ??
+                        ""
                     );
 
 
@@ -981,7 +923,8 @@ const Expenses = () => {
                     String(
                         secondExpense[
                         sortConfig.key
-                        ] ?? ""
+                        ] ??
+                        ""
                     );
             }
 
@@ -991,7 +934,9 @@ const Expenses = () => {
                     second,
                     undefined,
                     {
-                        numeric: true,
+                        numeric:
+                            true,
+
                         sensitivity:
                             "base",
                     }
@@ -1001,9 +946,7 @@ const Expenses = () => {
             return (
                 sortConfig.direction ===
                     "asc"
-
                     ? comparison
-
                     : -comparison
             );
         }
@@ -1011,7 +954,6 @@ const Expenses = () => {
 
 
     const clearFilters = () => {
-
         setSearchTerm("");
 
         setCategoryFilter(
@@ -1027,15 +969,14 @@ const Expenses = () => {
 
 
     const filtersActive =
-        searchTerm.trim() !== "" ||
-
+        searchTerm.trim() !==
+        "" ||
         categoryFilter !==
         "ALL" ||
-
         paymentModeFilter !==
         "ALL" ||
-
-        dateFilter !== "";
+        dateFilter !==
+        "";
 
 
     return (
@@ -1049,14 +990,15 @@ const Expenses = () => {
                         Expenses
                     </h1>
 
+
                     <p>
-                        {
-                            selectedEvent
-
+                        {selectedEvent
+                            ? canEdit
                                 ? `Record and track spending for ${selectedEvent.name}`
-
-                                : "Select an event to manage expenses"
-                        }
+                                : `View spending for ${selectedEvent.name}`
+                            : canEdit
+                                ? "Select an event to manage expenses"
+                                : "Select an event to view expenses"}
                     </p>
 
                 </div>
@@ -1064,18 +1006,23 @@ const Expenses = () => {
             </div>
 
 
-            {eventReadOnly && (
+            {!canEdit ? (
+
+                <div className="info-message">
+                    You have read-only access. You can view expenses,
+                    but you cannot add, edit, or delete records.
+                </div>
+
+            ) : eventReadOnly && (
 
                 <div className="info-message">
 
                     This event is{" "}
 
                     <strong>
-                        {
-                            selectedEvent
-                                .status
-                                .toLowerCase()
-                        }
+                        {selectedEvent
+                            .status
+                            .toLowerCase()}
                     </strong>
 
                     . Financial records are read-only.
@@ -1084,67 +1031,68 @@ const Expenses = () => {
             )}
 
 
-            <form
-                className="form-card"
-                onSubmit={
-                    handleSubmit
-                }
-            >
+            {canEdit && (
 
-                <h2>
-                    {
-                        editingId !==
-                            null
-
-                            ? "Edit Expense"
-
-                            : "Add Expense"
+                <form
+                    className="form-card"
+                    onSubmit={
+                        handleSubmit
                     }
-                </h2>
+                >
+
+                    <h2>
+                        {editingId !==
+                            null
+                            ? "Edit Expense"
+                            : "Add Expense"}
+                    </h2>
 
 
-                <div className="form-grid">
+                    <div className="form-grid">
 
-                    <div className="form-field">
+                        <div className="form-field">
 
-                        <label>
-                            Category
-                        </label>
+                            <label>
+                                Category
+                            </label>
 
 
-                        <select
-                            name="category"
-                            value={
-                                form.category
-                            }
-                            onChange={
-                                handleChange
-                            }
-                            required
-                            disabled={
-                                eventReadOnly ||
-                                loadingCategories ||
-                                expenseCategories
-                                    .length === 0
-                            }
-                        >
+                            <select
+                                name="category"
+                                value={
+                                    form.category
+                                }
+                                onChange={
+                                    handleChange
+                                }
+                                required
+                                disabled={
+                                    eventReadOnly ||
+                                    loadingCategories ||
+                                    expenseCategories
+                                        .length ===
+                                    0
+                                }
+                            >
 
-                            {
-                                loadingCategories
+                                {loadingCategories
                                     ? (
+
                                         <option value="">
                                             Loading categories...
                                         </option>
-                                    )
 
+                                    )
                                     : expenseCategories
-                                        .length === 0
+                                        .length ===
+                                        0
                                         ? (
+
                                             <option value="">
                                                 No active categories
                                             </option>
-                                        )
 
+                                        )
                                         : expenseCategories.map(
                                             (
                                                 category
@@ -1163,273 +1111,274 @@ const Expenses = () => {
                                                     }
                                                 </option>
                                             )
-                                        )
-                            }
+                                        )}
 
-                        </select>
+                            </select>
+
+                        </div>
+
+
+                        <div className="form-field">
+
+                            <label>
+                                Date
+                            </label>
+
+
+                            <input
+                                type="date"
+                                name="expenseDate"
+                                value={
+                                    form.expenseDate
+                                }
+                                onChange={
+                                    handleChange
+                                }
+                                required
+                                disabled={
+                                    eventReadOnly
+                                }
+                            />
+
+                        </div>
+
+
+                        <div className="form-field form-field-full">
+
+                            <label>
+                                Description
+                            </label>
+
+
+                            <input
+                                name="description"
+                                placeholder="Example: Main stage decoration"
+                                value={
+                                    form.description
+                                }
+                                onChange={
+                                    handleChange
+                                }
+                                required
+                                disabled={
+                                    eventReadOnly
+                                }
+                            />
+
+                        </div>
+
+
+                        <div className="form-field">
+
+                            <label>
+                                Vendor
+                            </label>
+
+
+                            <input
+                                name="vendorName"
+                                placeholder="Vendor name"
+                                value={
+                                    form.vendorName
+                                }
+                                onChange={
+                                    handleChange
+                                }
+                                disabled={
+                                    eventReadOnly
+                                }
+                            />
+
+                        </div>
+
+
+                        <div className="form-field">
+
+                            <label>
+                                Amount
+                            </label>
+
+
+                            <input
+                                type="number"
+                                name="amount"
+                                placeholder="Amount"
+                                value={
+                                    form.amount
+                                }
+                                onChange={
+                                    handleChange
+                                }
+                                min="0.01"
+                                step="0.01"
+                                required
+                                disabled={
+                                    eventReadOnly
+                                }
+                            />
+
+                        </div>
+
+
+                        <div className="form-field">
+
+                            <label>
+                                Payment Mode
+                            </label>
+
+
+                            <select
+                                name="paymentMode"
+                                value={
+                                    form.paymentMode
+                                }
+                                onChange={
+                                    handleChange
+                                }
+                                required
+                                disabled={
+                                    eventReadOnly
+                                }
+                            >
+
+                                <option value="CASH">
+                                    Cash
+                                </option>
+
+
+                                <option value="UPI">
+                                    UPI
+                                </option>
+
+
+                                <option value="BANK">
+                                    Bank
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div className="form-field">
+
+                            <label>
+                                Paid By
+                            </label>
+
+
+                            <input
+                                name="paidBy"
+                                placeholder="Person / committee"
+                                value={
+                                    form.paidBy
+                                }
+                                onChange={
+                                    handleChange
+                                }
+                                disabled={
+                                    eventReadOnly
+                                }
+                            />
+
+                        </div>
+
+
+                        <div className="form-field form-field-full">
+
+                            <label>
+                                Payment Reference
+                            </label>
+
+
+                            <input
+                                name="paymentReference"
+                                placeholder="UPI / Bank reference"
+                                value={
+                                    form.paymentReference
+                                }
+                                onChange={
+                                    handleChange
+                                }
+                                disabled={
+                                    eventReadOnly
+                                }
+                            />
+
+                        </div>
+
+
+                        <div className="form-field form-field-full">
+
+                            <label>
+                                Notes
+                            </label>
+
+
+                            <textarea
+                                name="notes"
+                                placeholder="Additional details"
+                                value={
+                                    form.notes
+                                }
+                                onChange={
+                                    handleChange
+                                }
+                                disabled={
+                                    eventReadOnly
+                                }
+                            />
+
+                        </div>
 
                     </div>
 
 
-                    <div className="form-field">
-
-                        <label>
-                            Date
-                        </label>
-
-                        <input
-                            type="date"
-                            name="expenseDate"
-                            value={
-                                form.expenseDate
-                            }
-                            onChange={
-                                handleChange
-                            }
-                            required
-                            disabled={
-                                eventReadOnly
-                            }
-                        />
-
-                    </div>
-
-
-                    <div className="form-field form-field-full">
-
-                        <label>
-                            Description
-                        </label>
-
-                        <input
-                            name="description"
-                            placeholder="Example: Main stage decoration"
-                            value={
-                                form.description
-                            }
-                            onChange={
-                                handleChange
-                            }
-                            required
-                            disabled={
-                                eventReadOnly
-                            }
-                        />
-
-                    </div>
-
-
-                    <div className="form-field">
-
-                        <label>
-                            Vendor
-                        </label>
-
-                        <input
-                            name="vendorName"
-                            placeholder="Vendor name"
-                            value={
-                                form.vendorName
-                            }
-                            onChange={
-                                handleChange
-                            }
-                            disabled={
-                                eventReadOnly
-                            }
-                        />
-
-                    </div>
-
-
-                    <div className="form-field">
-
-                        <label>
-                            Amount
-                        </label>
-
-                        <input
-                            type="number"
-                            name="amount"
-                            placeholder="Amount"
-                            value={
-                                form.amount
-                            }
-                            onChange={
-                                handleChange
-                            }
-                            min="0.01"
-                            step="0.01"
-                            required
-                            disabled={
-                                eventReadOnly
-                            }
-                        />
-
-                    </div>
-
-
-                    <div className="form-field">
-
-                        <label>
-                            Payment Mode
-                        </label>
-
-                        <select
-                            name="paymentMode"
-                            value={
-                                form.paymentMode
-                            }
-                            onChange={
-                                handleChange
-                            }
-                            required
-                            disabled={
-                                eventReadOnly
-                            }
-                        >
-
-                            <option value="CASH">
-                                Cash
-                            </option>
-
-                            <option value="UPI">
-                                UPI
-                            </option>
-
-                            <option value="BANK">
-                                Bank
-                            </option>
-
-                        </select>
-
-                    </div>
-
-
-                    <div className="form-field">
-
-                        <label>
-                            Paid By
-                        </label>
-
-                        <input
-                            name="paidBy"
-                            placeholder="Person / committee"
-                            value={
-                                form.paidBy
-                            }
-                            onChange={
-                                handleChange
-                            }
-                            disabled={
-                                eventReadOnly
-                            }
-                        />
-
-                    </div>
-
-
-                    <div className="form-field form-field-full">
-
-                        <label>
-                            Payment Reference
-                        </label>
-
-                        <input
-                            name="paymentReference"
-                            placeholder="UPI / Bank reference"
-                            value={
-                                form
-                                    .paymentReference
-                            }
-                            onChange={
-                                handleChange
-                            }
-                            disabled={
-                                eventReadOnly
-                            }
-                        />
-
-                    </div>
-
-
-                    <div className="form-field form-field-full">
-
-                        <label>
-                            Notes
-                        </label>
-
-                        <textarea
-                            name="notes"
-                            placeholder="Additional details"
-                            value={
-                                form.notes
-                            }
-                            onChange={
-                                handleChange
-                            }
-                            disabled={
-                                eventReadOnly
-                            }
-                        />
-
-                    </div>
-
-                </div>
-
-
-                <div className="form-actions">
-
-                    <button
-                        className="primary-button"
-                        type="submit"
-                        disabled={
-                            loading ||
-                            !selectedEventId ||
-                            eventReadOnly ||
-                            loadingCategories ||
-                            expenseCategories
-                                .length === 0
-                        }
-                    >
-
-                        {
-                            loading
-
-                                ? "Saving..."
-
-                                : editingId !==
-                                    null
-
-                                    ? "Update Expense"
-
-                                    : "Add Expense"
-                        }
-
-                    </button>
-
-
-                    {editingId !== null && (
+                    <div className="form-actions">
 
                         <button
-                            type="button"
-                            className="secondary-button"
-                            onClick={
-                                handleCancelEdit
-                            }
+                            className="primary-button"
+                            type="submit"
                             disabled={
-                                loading
+                                loading ||
+                                !selectedEventId ||
+                                eventReadOnly ||
+                                loadingCategories ||
+                                expenseCategories
+                                    .length ===
+                                0
                             }
                         >
-
-                            Cancel
-
+                            {loading
+                                ? "Saving..."
+                                : editingId !==
+                                    null
+                                    ? "Update Expense"
+                                    : "Add Expense"}
                         </button>
-                    )}
 
-                </div>
 
-            </form>
+                        {editingId !==
+                            null && (
+
+                                <button
+                                    type="button"
+                                    className="secondary-button"
+                                    onClick={
+                                        handleCancelEdit
+                                    }
+                                    disabled={
+                                        loading
+                                    }
+                                >
+                                    Cancel
+                                </button>
+                            )}
+
+                    </div>
+
+                </form>
+            )}
 
 
             {error && (
@@ -1457,10 +1406,11 @@ const Expenses = () => {
                             searchTerm
                         }
                         onChange={
-                            (event) =>
+                            (
+                                event
+                            ) =>
                                 setSearchTerm(
-                                    event.target
-                                        .value
+                                    event.target.value
                                 )
                         }
                     />
@@ -1472,10 +1422,11 @@ const Expenses = () => {
                             categoryFilter
                         }
                         onChange={
-                            (event) =>
+                            (
+                                event
+                            ) =>
                                 setCategoryFilter(
-                                    event.target
-                                        .value
+                                    event.target.value
                                 )
                         }
                     >
@@ -1485,27 +1436,25 @@ const Expenses = () => {
                         </option>
 
 
-                        {
-                            expenseCategories.map(
-                                (
-                                    category
-                                ) => (
+                        {expenseCategories.map(
+                            (
+                                category
+                            ) => (
 
-                                    <option
-                                        key={
-                                            category.id
-                                        }
-                                        value={
-                                            category.code
-                                        }
-                                    >
-                                        {
-                                            category.name
-                                        }
-                                    </option>
-                                )
+                                <option
+                                    key={
+                                        category.id
+                                    }
+                                    value={
+                                        category.code
+                                    }
+                                >
+                                    {
+                                        category.name
+                                    }
+                                </option>
                             )
-                        }
+                        )}
 
                     </select>
 
@@ -1516,10 +1465,11 @@ const Expenses = () => {
                             paymentModeFilter
                         }
                         onChange={
-                            (event) =>
+                            (
+                                event
+                            ) =>
                                 setPaymentModeFilter(
-                                    event.target
-                                        .value
+                                    event.target.value
                                 )
                         }
                     >
@@ -1528,13 +1478,16 @@ const Expenses = () => {
                             All Payment Modes
                         </option>
 
+
                         <option value="CASH">
                             Cash
                         </option>
 
+
                         <option value="UPI">
                             UPI
                         </option>
+
 
                         <option value="BANK">
                             Bank
@@ -1550,10 +1503,11 @@ const Expenses = () => {
                             dateFilter
                         }
                         onChange={
-                            (event) =>
+                            (
+                                event
+                            ) =>
                                 setDateFilter(
-                                    event.target
-                                        .value
+                                    event.target.value
                                 )
                         }
                     />
@@ -1568,285 +1522,274 @@ const Expenses = () => {
                                 clearFilters
                             }
                         >
-
                             Clear Filters
-
                         </button>
                     )}
 
                 </div>
 
 
-                {
-                    loadingExpenses
+                {loadingExpenses ? (
 
-                        ? (
-                            <p>
-                                Loading expenses...
-                            </p>
-                        )
+                    <p>
+                        Loading expenses...
+                    </p>
 
-                        : expenses.length ===
-                            0
+                ) : expenses.length ===
+                    0 ? (
 
-                            ? (
-                                <p>
-                                    No expenses recorded for this event yet.
-                                </p>
-                            )
+                    <p>
+                        No expenses recorded for this event yet.
+                    </p>
 
-                            : filteredExpenses
-                                .length === 0
+                ) : filteredExpenses.length ===
+                    0 ? (
 
-                                ? (
-                                    <p>
-                                        No expenses match the selected filters.
-                                    </p>
-                                )
+                    <p>
+                        No expenses match the selected filters.
+                    </p>
 
-                                : (
-                                    <div className="table-wrapper">
+                ) : (
 
-                                        <table>
+                    <div className="table-wrapper">
 
-                                            <thead>
+                        <table>
 
-                                                <tr>
+                            <thead>
 
-                                                    <th
-                                                        className="sortable-header"
-                                                        onClick={() =>
-                                                            handleSort(
-                                                                "expenseDate"
-                                                            )
-                                                        }
-                                                    >
-                                                        Date
-                                                        {
-                                                            getSortIndicator(
-                                                                "expenseDate"
-                                                            )
-                                                        }
-                                                    </th>
+                                <tr>
+
+                                    <th
+                                        className="sortable-header"
+                                        onClick={
+                                            () =>
+                                                handleSort(
+                                                    "expenseDate"
+                                                )
+                                        }
+                                    >
+                                        Date
+
+                                        {getSortIndicator(
+                                            "expenseDate"
+                                        )}
+                                    </th>
 
 
-                                                    <th
-                                                        className="sortable-header"
-                                                        onClick={() =>
-                                                            handleSort(
-                                                                "category"
-                                                            )
-                                                        }
-                                                    >
-                                                        Category
-                                                        {
-                                                            getSortIndicator(
-                                                                "category"
-                                                            )
-                                                        }
-                                                    </th>
+                                    <th
+                                        className="sortable-header"
+                                        onClick={
+                                            () =>
+                                                handleSort(
+                                                    "category"
+                                                )
+                                        }
+                                    >
+                                        Category
+
+                                        {getSortIndicator(
+                                            "category"
+                                        )}
+                                    </th>
 
 
-                                                    <th
-                                                        className="sortable-header"
-                                                        onClick={() =>
-                                                            handleSort(
-                                                                "description"
-                                                            )
-                                                        }
-                                                    >
-                                                        Description
-                                                        {
-                                                            getSortIndicator(
-                                                                "description"
-                                                            )
-                                                        }
-                                                    </th>
+                                    <th
+                                        className="sortable-header"
+                                        onClick={
+                                            () =>
+                                                handleSort(
+                                                    "description"
+                                                )
+                                        }
+                                    >
+                                        Description
+
+                                        {getSortIndicator(
+                                            "description"
+                                        )}
+                                    </th>
 
 
-                                                    <th
-                                                        className="sortable-header"
-                                                        onClick={() =>
-                                                            handleSort(
-                                                                "vendorName"
-                                                            )
-                                                        }
-                                                    >
-                                                        Vendor
-                                                        {
-                                                            getSortIndicator(
-                                                                "vendorName"
-                                                            )
-                                                        }
-                                                    </th>
+                                    <th
+                                        className="sortable-header"
+                                        onClick={
+                                            () =>
+                                                handleSort(
+                                                    "vendorName"
+                                                )
+                                        }
+                                    >
+                                        Vendor
+
+                                        {getSortIndicator(
+                                            "vendorName"
+                                        )}
+                                    </th>
 
 
-                                                    <th
-                                                        className="sortable-header"
-                                                        onClick={() =>
-                                                            handleSort(
-                                                                "paymentMode"
-                                                            )
-                                                        }
-                                                    >
-                                                        Mode
-                                                        {
-                                                            getSortIndicator(
-                                                                "paymentMode"
-                                                            )
-                                                        }
-                                                    </th>
+                                    <th
+                                        className="sortable-header"
+                                        onClick={
+                                            () =>
+                                                handleSort(
+                                                    "paymentMode"
+                                                )
+                                        }
+                                    >
+                                        Mode
+
+                                        {getSortIndicator(
+                                            "paymentMode"
+                                        )}
+                                    </th>
 
 
-                                                    <th
-                                                        className="sortable-header"
-                                                        onClick={() =>
-                                                            handleSort(
-                                                                "amount"
-                                                            )
-                                                        }
-                                                    >
-                                                        Amount
-                                                        {
-                                                            getSortIndicator(
-                                                                "amount"
-                                                            )
-                                                        }
-                                                    </th>
+                                    <th
+                                        className="sortable-header"
+                                        onClick={
+                                            () =>
+                                                handleSort(
+                                                    "amount"
+                                                )
+                                        }
+                                    >
+                                        Amount
+
+                                        {getSortIndicator(
+                                            "amount"
+                                        )}
+                                    </th>
 
 
-                                                    <th>
-                                                        Actions
-                                                    </th>
+                                    {canEdit && (
 
-                                                </tr>
+                                        <th>
+                                            Actions
+                                        </th>
+                                    )}
 
-                                            </thead>
+                                </tr>
+
+                            </thead>
 
 
-                                            <tbody>
+                            <tbody>
 
+                                {sortedExpenses.map(
+                                    (
+                                        expense
+                                    ) => (
+
+                                        <tr
+                                            key={
+                                                expense.id
+                                            }
+                                        >
+
+                                            <td>
                                                 {
-                                                    sortedExpenses.map(
-                                                        (
-                                                            expense
-                                                        ) => (
-
-                                                            <tr
-                                                                key={
-                                                                    expense.id
-                                                                }
-                                                            >
-
-                                                                <td>
-                                                                    {
-                                                                        expense.expenseDate
-                                                                    }
-                                                                </td>
+                                                    expense.expenseDate
+                                                }
+                                            </td>
 
 
-                                                                <td>
-                                                                    {
-                                                                        expense.categoryName ||
-                                                                        getCategoryName(
-                                                                            expense.category
-                                                                        )
-                                                                    }
-                                                                </td>
-
-
-                                                                <td>
-                                                                    {
-                                                                        expense.description
-                                                                    }
-                                                                </td>
-
-
-                                                                <td>
-                                                                    {
-                                                                        expense.vendorName ||
-                                                                        "-"
-                                                                    }
-                                                                </td>
-
-
-                                                                <td>
-                                                                    {
-                                                                        expense.paymentMode
-                                                                    }
-                                                                </td>
-
-
-                                                                <td>
-                                                                    ₹
-                                                                    {
-                                                                        expense.amount
-                                                                    }
-                                                                </td>
-
-
-                                                                <td>
-
-                                                                    <div className="table-actions">
-
-                                                                        <button
-                                                                            type="button"
-                                                                            className="secondary-button"
-                                                                            onClick={() =>
-                                                                                handleEdit(
-                                                                                    expense
-                                                                                )
-                                                                            }
-                                                                            disabled={
-                                                                                eventReadOnly
-                                                                            }
-                                                                        >
-                                                                            Edit
-                                                                        </button>
-
-
-                                                                        <button
-                                                                            type="button"
-                                                                            className="danger-button"
-                                                                            onClick={() =>
-                                                                                handleDelete(
-                                                                                    expense.id
-                                                                                )
-                                                                            }
-                                                                            disabled={
-                                                                                eventReadOnly ||
-                                                                                deletingId ===
-                                                                                expense.id
-                                                                            }
-                                                                        >
-
-                                                                            {
-                                                                                deletingId ===
-                                                                                    expense.id
-
-                                                                                    ? "Deleting..."
-
-                                                                                    : "Delete"
-                                                                            }
-
-                                                                        </button>
-
-                                                                    </div>
-
-                                                                </td>
-
-                                                            </tr>
-                                                        )
+                                            <td>
+                                                {
+                                                    expense.categoryName ||
+                                                    getCategoryName(
+                                                        expense.category
                                                     )
                                                 }
+                                            </td>
 
-                                            </tbody>
 
-                                        </table>
+                                            <td>
+                                                {
+                                                    expense.description
+                                                }
+                                            </td>
 
-                                    </div>
-                                )
-                }
+
+                                            <td>
+                                                {expense.vendorName ||
+                                                    "-"}
+                                            </td>
+
+
+                                            <td>
+                                                {
+                                                    expense.paymentMode
+                                                }
+                                            </td>
+
+
+                                            <td>
+                                                ₹
+                                                {
+                                                    expense.amount
+                                                }
+                                            </td>
+
+
+                                            {canEdit && (
+
+                                                <td>
+
+                                                    <div className="table-actions">
+
+                                                        <button
+                                                            type="button"
+                                                            className="secondary-button"
+                                                            onClick={
+                                                                () =>
+                                                                    handleEdit(
+                                                                        expense
+                                                                    )
+                                                            }
+                                                            disabled={
+                                                                eventReadOnly
+                                                            }
+                                                        >
+                                                            Edit
+                                                        </button>
+
+
+                                                        <button
+                                                            type="button"
+                                                            className="danger-button"
+                                                            onClick={
+                                                                () =>
+                                                                    handleDelete(
+                                                                        expense.id
+                                                                    )
+                                                            }
+                                                            disabled={
+                                                                eventReadOnly ||
+                                                                deletingId ===
+                                                                expense.id
+                                                            }
+                                                        >
+                                                            {deletingId ===
+                                                                expense.id
+                                                                ? "Deleting..."
+                                                                : "Delete"}
+                                                        </button>
+
+                                                    </div>
+
+                                                </td>
+                                            )}
+
+                                        </tr>
+                                    )
+                                )}
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+                )}
 
             </div>
 
