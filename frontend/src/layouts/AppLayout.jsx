@@ -1,5 +1,59 @@
-import { NavLink, Outlet } from "react-router-dom";
+import {
+    NavLink,
+    Outlet,
+} from "react-router-dom";
+
 import { useEvent } from "../context/EventContext";
+
+import "./AppLayout.css";
+
+const NAV_ITEMS = [
+    {
+        path: "/events",
+        desktopLabel: "Events",
+        mobileLabel: "Events",
+    },
+    {
+        path: "/dashboard",
+        desktopLabel: "Dashboard",
+        mobileLabel: "Dashboard",
+    },
+    {
+        path: "/contributors",
+        desktopLabel: "Contributors",
+        mobileLabel: "People",
+    },
+    {
+        path: "/contributions",
+        desktopLabel: "Contributions",
+        mobileLabel: "Collections",
+    },
+    {
+        path: "/contributor-status",
+        desktopLabel: "Contributor Status",
+        mobileLabel: "Status",
+    },
+    {
+        path: "/contributor-history",
+        desktopLabel: "Contributor History",
+        mobileLabel: "History",
+    },
+    {
+        path: "/expenses",
+        desktopLabel: "Expenses",
+        mobileLabel: "Expenses",
+    },
+    {
+        path: "/reports",
+        desktopLabel: "Reports",
+        mobileLabel: "Reports",
+    },
+    {
+        path: "/settings",
+        desktopLabel: "Settings",
+        mobileLabel: "Settings",
+    },
+];
 
 const AppLayout = () => {
     const {
@@ -9,31 +63,53 @@ const AppLayout = () => {
         loadingEvents,
     } = useEvent();
 
-    const renderEventSelector = (id) => {
+    const renderEventSelector = (
+        id
+    ) => {
         if (loadingEvents) {
-            return <p>Loading events...</p>;
+            return (
+                <p className="event-selector-message">
+                    Loading events...
+                </p>
+            );
         }
 
         if (events.length === 0) {
-            return <p>No events available</p>;
+            return (
+                <p className="event-selector-message">
+                    No events available
+                </p>
+            );
         }
 
         return (
             <select
                 id={id}
-                value={selectedEventId}
+                value={
+                    selectedEventId || ""
+                }
                 onChange={(event) =>
-                    setSelectedEventId(event.target.value)
+                    setSelectedEventId(
+                        event.target.value
+                    )
                 }
             >
-                {events.map((event) => (
-                    <option
-                        key={event.id}
-                        value={event.id}
-                    >
-                        {event.name}
-                    </option>
-                ))}
+                {events.map(
+                    (event) => (
+                        <option
+                            key={
+                                event.id
+                            }
+                            value={
+                                event.id
+                            }
+                        >
+                            {
+                                event.name
+                            }
+                        </option>
+                    )
+                )}
             </select>
         );
     };
@@ -50,28 +126,36 @@ const AppLayout = () => {
                         Current Event
                     </label>
 
-                    {renderEventSelector("desktopEvent")}
+                    {renderEventSelector(
+                        "desktopEvent"
+                    )}
                 </div>
 
                 <nav className="sidebar-nav">
-                    <NavLink to="/events">
-                        Events
-                    </NavLink>
-                    <NavLink to="/dashboard">
-                        Dashboard
-                    </NavLink>
+                    {NAV_ITEMS.map(
+                        (item) => (
+                            <NavLink
+                                key={
+                                    item.path
+                                }
+                                to={
+                                    item.path
+                                }
+                            >
+                                <span className="nav-label-desktop">
+                                    {
+                                        item.desktopLabel
+                                    }
+                                </span>
 
-                    <NavLink to="/contributors">
-                        Contributors
-                    </NavLink>
-
-                    <NavLink to="/contributions">
-                        Contributions
-                    </NavLink>
-
-                    <NavLink to="/expenses">
-                        Expenses
-                    </NavLink>
+                                <span className="nav-label-mobile">
+                                    {
+                                        item.mobileLabel
+                                    }
+                                </span>
+                            </NavLink>
+                        )
+                    )}
                 </nav>
             </aside>
 
@@ -81,7 +165,9 @@ const AppLayout = () => {
                         Current Event
                     </label>
 
-                    {renderEventSelector("mobileEvent")}
+                    {renderEventSelector(
+                        "mobileEvent"
+                    )}
                 </div>
 
                 <Outlet />

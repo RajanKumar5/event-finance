@@ -1,0 +1,183 @@
+.settings-summary-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(3,
+            minmax(0, 1fr));
+
+    gap: 16px;
+
+    margin-bottom: 24px;
+}
+
+
+.settings-summary-card {
+    display: flex;
+    flex-direction: column;
+
+    gap: 8px;
+
+    padding: 20px;
+
+    background:
+        var(--bg-card);
+
+    border:
+        1px solid var(--border);
+
+    border-radius: 12px;
+
+    box-shadow:
+        var(--shadow-card);
+}
+
+
+.settings-summary-card span {
+    color:
+        var(--text-secondary);
+
+    font-size: 14px;
+}
+
+
+.settings-summary-card strong {
+    color:
+        var(--text-primary);
+
+    font-size: 28px;
+}
+
+
+.settings-section-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+
+    gap: 16px;
+}
+
+
+.settings-section-header h2 {
+    margin-top: 0;
+    margin-bottom: 4px;
+}
+
+
+.settings-section-header p {
+    margin-top: 0;
+    margin-bottom: 0;
+
+    color:
+        var(--text-secondary);
+
+    font-size: 14px;
+}
+
+
+.settings-checkbox-row {
+    display: flex;
+    align-items: center;
+
+    gap: 8px;
+
+    min-height: 43px;
+
+    cursor: pointer;
+}
+
+
+.settings-checkbox-row input {
+    width: auto;
+
+    margin: 0;
+}
+
+
+.settings-field-help {
+    color:
+        var(--text-secondary);
+
+    font-size: 12px;
+}
+
+
+.settings-category-code {
+    padding: 4px 7px;
+
+    background:
+        var(--bg-soft);
+
+    border-radius: 6px;
+
+    font-size: 12px;
+}
+
+
+.settings-status {
+    display: inline-flex;
+
+    align-items: center;
+
+    padding:
+        5px 9px;
+
+    border-radius:
+        999px;
+
+    font-size:
+        12px;
+
+    font-weight:
+        700;
+}
+
+
+.settings-status-active {
+    background:
+        var(--success-soft);
+
+    color:
+        var(--success-dark);
+}
+
+
+.settings-status-inactive {
+    background:
+        var(--danger-soft);
+
+    color:
+        var(--danger-dark);
+}
+
+
+.success-message {
+    padding: 12px 14px;
+
+    margin-bottom: 20px;
+
+    background:
+        var(--success-soft);
+
+    border:
+        1px solid var(--success);
+
+    border-radius: 8px;
+
+    color:
+        var(--success-dark);
+}
+
+
+@media (max-width: 768px) {
+
+    .settings-summary-grid {
+        grid-template-columns:
+            1fr;
+    }
+
+
+    .settings-section-header {
+        flex-direction:
+            column;
+    }
+}

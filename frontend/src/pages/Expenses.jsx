@@ -1,4 +1,7 @@
-import { useEffect, useState } from "react";
+import {
+    useEffect,
+    useState,
+} from "react";
 
 import {
     createExpense,
@@ -7,170 +10,440 @@ import {
     updateExpense,
 } from "../api/expenseApi";
 
+import {
+    getActiveExpenseCategories,
+} from "../api/masterDataApi";
+
 import { useEvent } from "../context/EventContext";
 
-const ExpenseCategories = [
-    "DECORATION",
-    "SOUND",
-    "LIGHTING",
-    "PRASAD",
-    "PUJA",
-    "TRANSPORTATION",
-    "PRINTING",
-    "CLEANING",
-    "FOOD",
-    "SECURITY",
-    "MISCELLANEOUS",
-];
 
-const createEmptyForm = () => ({
-    category: "DECORATION",
+const createEmptyForm = (
+    defaultCategory = ""
+) => ({
+    category: defaultCategory,
+
     description: "",
+
     vendorName: "",
+
     amount: "",
+
     expenseDate: new Date()
         .toISOString()
         .split("T")[0],
+
     paymentMode: "CASH",
+
     paidBy: "",
+
     paymentReference: "",
+
     notes: "",
 });
 
+
 const Expenses = () => {
+
     const {
         selectedEventId,
         selectedEvent,
     } = useEvent();
 
-    const [expenses, setExpenses] =
-        useState([]);
 
-    const [form, setForm] =
-        useState(createEmptyForm());
+    const [
+        expenses,
+        setExpenses,
+    ] = useState([]);
 
-    const [editingId, setEditingId] =
-        useState(null);
 
-    const [loading, setLoading] =
-        useState(false);
+    const [
+        expenseCategories,
+        setExpenseCategories,
+    ] = useState([]);
+
+
+    const [
+        form,
+        setForm,
+    ] = useState(
+        createEmptyForm()
+    );
+
+
+    const [
+        editingId,
+        setEditingId,
+    ] = useState(null);
+
+
+    const [
+        loading,
+        setLoading,
+    ] = useState(false);
+
 
     const [
         loadingExpenses,
         setLoadingExpenses,
     ] = useState(false);
 
-    const [deletingId, setDeletingId] =
-        useState(null);
 
-    const [error, setError] =
-        useState("");
+    const [
+        loadingCategories,
+        setLoadingCategories,
+    ] = useState(false);
 
-    const [searchTerm, setSearchTerm] =
-        useState("");
+
+    const [
+        deletingId,
+        setDeletingId,
+    ] = useState(null);
+
+
+    const [
+        error,
+        setError,
+    ] = useState("");
+
+
+    const [
+        searchTerm,
+        setSearchTerm,
+    ] = useState("");
+
 
     const [
         categoryFilter,
         setCategoryFilter,
     ] = useState("ALL");
 
+
     const [
         paymentModeFilter,
         setPaymentModeFilter,
     ] = useState("ALL");
 
-    const [dateFilter, setDateFilter] =
-        useState("");
 
-    const [sortConfig, setSortConfig] =
-        useState({
-            key: "expenseDate",
-            direction: "desc",
-        });
+    const [
+        dateFilter,
+        setDateFilter,
+    ] = useState("");
+
+
+    const [
+        sortConfig,
+        setSortConfig,
+    ] = useState({
+        key: "expenseDate",
+        direction: "desc",
+    });
+
 
     const eventReadOnly =
-        selectedEvent?.status === "COMPLETED" ||
-        selectedEvent?.status === "ARCHIVED";
+        selectedEvent?.status ===
+        "COMPLETED" ||
+        selectedEvent?.status ===
+        "ARCHIVED";
 
-    const loadExpenses = async (
-        eventId
+
+    const getDefaultCategory = (
+        categories = expenseCategories
     ) => {
-        try {
-            setLoadingExpenses(true);
-            setError("");
 
-            const data =
-                await getExpensesByEvent(
-                    eventId
+        if (
+            !categories ||
+            categories.length === 0
+        ) {
+            return "";
+        }
+
+
+        return categories[0].code;
+    };
+
+
+    const getCategoryName = (
+        categoryCode
+    ) => {
+
+        const category =
+            expenseCategories.find(
+                (item) =>
+                    item.code ===
+                    categoryCode
+            );
+
+
+        if (category) {
+            return category.name;
+        }
+
+
+        return (
+            categoryCode
+                ?.replaceAll(
+                    "_",
+                    " "
+                ) || "-"
+        );
+    };
+
+
+    const loadCategories =
+        async () => {
+
+            try {
+
+                setLoadingCategories(
+                    true
                 );
 
-            setExpenses(data);
-        } catch (err) {
-            console.error(err);
 
-            setError(
-                err.response?.data?.message ||
-                "Failed to load expenses"
-            );
-        } finally {
-            setLoadingExpenses(false);
-        }
-    };
+                const data =
+                    await getActiveExpenseCategories();
+
+
+                setExpenseCategories(
+                    data
+                );
+
+
+                if (
+                    data.length > 0
+                ) {
+
+                    setForm(
+                        (previous) => {
+
+                            if (
+                                previous.category
+                            ) {
+                                return previous;
+                            }
+
+
+                            return {
+                                ...previous,
+
+                                category:
+                                    data[0]
+                                        .code,
+                            };
+                        }
+                    );
+                }
+
+            } catch (err) {
+
+                console.error(err);
+
+
+                setError(
+                    err.response?.data
+                        ?.message ||
+                    "Failed to load expense categories"
+                );
+
+            } finally {
+
+                setLoadingCategories(
+                    false
+                );
+            }
+        };
+
+
+    const loadExpenses =
+        async (
+            eventId
+        ) => {
+
+            try {
+
+                setLoadingExpenses(
+                    true
+                );
+
+                setError("");
+
+
+                const data =
+                    await getExpensesByEvent(
+                        eventId
+                    );
+
+
+                setExpenses(
+                    data
+                );
+
+            } catch (err) {
+
+                console.error(err);
+
+
+                setError(
+                    err.response?.data
+                        ?.message ||
+                    "Failed to load expenses"
+                );
+
+            } finally {
+
+                setLoadingExpenses(
+                    false
+                );
+            }
+        };
+
 
     const resetForm = () => {
-        setForm(createEmptyForm());
-        setEditingId(null);
+
+        setForm(
+            createEmptyForm(
+                getDefaultCategory()
+            )
+        );
+
+
+        setEditingId(
+            null
+        );
     };
 
+
     useEffect(() => {
+
+        loadCategories();
+
+    }, []);
+
+
+    useEffect(() => {
+
         resetForm();
 
-        setSearchTerm("");
-        setCategoryFilter("ALL");
-        setPaymentModeFilter("ALL");
-        setDateFilter("");
+
+        setSearchTerm(
+            ""
+        );
+
+
+        setCategoryFilter(
+            "ALL"
+        );
+
+
+        setPaymentModeFilter(
+            "ALL"
+        );
+
+
+        setDateFilter(
+            ""
+        );
+
 
         setSortConfig({
             key: "expenseDate",
             direction: "desc",
         });
 
-        if (!selectedEventId) {
+
+        if (
+            !selectedEventId
+        ) {
+
             setExpenses([]);
+
             return;
         }
+
 
         loadExpenses(
             selectedEventId
         );
+
     }, [selectedEventId]);
 
-    const handleChange = (event) => {
-        const { name, value } =
-            event.target;
 
-        setForm((previous) => ({
-            ...previous,
-            [name]: value,
-        }));
+    useEffect(() => {
+
+        if (
+            editingId !== null
+        ) {
+            return;
+        }
+
+
+        if (
+            !form.category &&
+            expenseCategories.length >
+            0
+        ) {
+
+            setForm(
+                (previous) => ({
+                    ...previous,
+
+                    category:
+                        expenseCategories[0]
+                            .code,
+                })
+            );
+        }
+
+    }, [
+        expenseCategories,
+        editingId,
+        form.category,
+    ]);
+
+
+    const handleChange = (
+        event
+    ) => {
+
+        const {
+            name,
+            value,
+        } = event.target;
+
+
+        setForm(
+            (previous) => ({
+                ...previous,
+
+                [name]: value,
+            })
+        );
     };
+
 
     const handleEdit = (
         expense
     ) => {
-        if (eventReadOnly) {
+
+        if (
+            eventReadOnly
+        ) {
             return;
         }
 
+
         setError("");
+
+
         setEditingId(
             expense.id
         );
 
+
         setForm({
+
             category:
                 expense.category ||
-                "DECORATION",
+                "",
 
             description:
                 expense.description ||
@@ -181,7 +454,8 @@ const Expenses = () => {
                 "",
 
             amount:
-                expense.amount ?? "",
+                expense.amount ??
+                "",
 
             expenseDate:
                 expense.expenseDate ||
@@ -192,15 +466,18 @@ const Expenses = () => {
                 "CASH",
 
             paidBy:
-                expense.paidBy || "",
+                expense.paidBy ||
+                "",
 
             paymentReference:
                 expense.paymentReference ||
                 "",
 
             notes:
-                expense.notes || "",
+                expense.notes ||
+                "",
         });
+
 
         window.scrollTo({
             top: 0,
@@ -208,165 +485,275 @@ const Expenses = () => {
         });
     };
 
-    const handleCancelEdit = () => {
-        setError("");
-        resetForm();
-    };
 
-    const handleSubmit = async (
-        event
-    ) => {
-        event.preventDefault();
+    const handleCancelEdit =
+        () => {
 
-        if (!selectedEventId) {
-            setError(
-                "Please select an event first"
-            );
-            return;
-        }
-
-        if (eventReadOnly) {
-            setError(
-                "Financial records cannot be modified for a completed or archived event"
-            );
-            return;
-        }
-
-        try {
-            setLoading(true);
             setError("");
-
-            const request = {
-                eventId:
-                    Number(
-                        selectedEventId
-                    ),
-
-                category:
-                    form.category,
-
-                description:
-                    form.description,
-
-                vendorName:
-                    form.vendorName ||
-                    null,
-
-                amount:
-                    Number(
-                        form.amount
-                    ),
-
-                expenseDate:
-                    form.expenseDate,
-
-                paymentMode:
-                    form.paymentMode,
-
-                paidBy:
-                    form.paidBy ||
-                    null,
-
-                paymentReference:
-                    form.paymentReference ||
-                    null,
-
-                notes:
-                    form.notes ||
-                    null,
-            };
-
-            if (editingId !== null) {
-                await updateExpense(
-                    editingId,
-                    request
-                );
-            } else {
-                await createExpense(
-                    request
-                );
-            }
 
             resetForm();
+        };
 
-            await loadExpenses(
-                selectedEventId
-            );
-        } catch (err) {
-            console.error(err);
 
-            const message =
-                err.response?.data?.message ||
-                (editingId !== null
-                    ? "Failed to update expense"
-                    : "Failed to create expense");
+    const handleSubmit =
+        async (
+            event
+        ) => {
 
-            setError(message);
-        } finally {
-            setLoading(false);
-        }
-    };
+            event.preventDefault();
 
-    const handleDelete = async (
-        id
-    ) => {
-        if (eventReadOnly) {
-            setError(
-                "Financial records cannot be modified for a completed or archived event"
-            );
-            return;
-        }
 
-        const shouldDelete =
-            window.confirm(
-                "Are you sure you want to delete this expense?"
-            );
+            if (
+                !selectedEventId
+            ) {
 
-        if (!shouldDelete) {
-            return;
-        }
+                setError(
+                    "Please select an event first"
+                );
 
-        try {
-            setDeletingId(id);
-            setError("");
-
-            await deleteExpense(id);
-
-            if (editingId === id) {
-                resetForm();
+                return;
             }
 
-            await loadExpenses(
-                selectedEventId
-            );
-        } catch (err) {
-            console.error(err);
 
-            const message =
-                err.response?.data?.message ||
-                "Failed to delete expense";
+            if (
+                eventReadOnly
+            ) {
 
-            setError(message);
-        } finally {
-            setDeletingId(null);
-        }
-    };
+                setError(
+                    "Financial records cannot be modified for a completed or archived event"
+                );
 
-    const handleSort = (key) => {
+                return;
+            }
+
+
+            if (
+                !form.category
+            ) {
+
+                setError(
+                    "Please select an expense category"
+                );
+
+                return;
+            }
+
+
+            try {
+
+                setLoading(
+                    true
+                );
+
+                setError("");
+
+
+                const request = {
+
+                    eventId:
+                        Number(
+                            selectedEventId
+                        ),
+
+                    category:
+                        form.category,
+
+                    description:
+                        form.description,
+
+                    vendorName:
+                        form.vendorName ||
+                        null,
+
+                    amount:
+                        Number(
+                            form.amount
+                        ),
+
+                    expenseDate:
+                        form.expenseDate,
+
+                    paymentMode:
+                        form.paymentMode,
+
+                    paidBy:
+                        form.paidBy ||
+                        null,
+
+                    paymentReference:
+                        form
+                            .paymentReference ||
+                        null,
+
+                    notes:
+                        form.notes ||
+                        null,
+                };
+
+
+                if (
+                    editingId !==
+                    null
+                ) {
+
+                    await updateExpense(
+                        editingId,
+                        request
+                    );
+
+                } else {
+
+                    await createExpense(
+                        request
+                    );
+                }
+
+
+                resetForm();
+
+
+                await loadExpenses(
+                    selectedEventId
+                );
+
+            } catch (err) {
+
+                console.error(err);
+
+
+                const message =
+                    err.response?.data
+                        ?.message ||
+                    (
+                        editingId !==
+                            null
+
+                            ? "Failed to update expense"
+
+                            : "Failed to create expense"
+                    );
+
+
+                setError(
+                    message
+                );
+
+            } finally {
+
+                setLoading(
+                    false
+                );
+            }
+        };
+
+
+    const handleDelete =
+        async (
+            id
+        ) => {
+
+            if (
+                eventReadOnly
+            ) {
+
+                setError(
+                    "Financial records cannot be modified for a completed or archived event"
+                );
+
+                return;
+            }
+
+
+            const shouldDelete =
+                window.confirm(
+                    "Are you sure you want to delete this expense?"
+                );
+
+
+            if (
+                !shouldDelete
+            ) {
+                return;
+            }
+
+
+            try {
+
+                setDeletingId(
+                    id
+                );
+
+                setError("");
+
+
+                await deleteExpense(
+                    id
+                );
+
+
+                if (
+                    editingId ===
+                    id
+                ) {
+
+                    resetForm();
+                }
+
+
+                await loadExpenses(
+                    selectedEventId
+                );
+
+            } catch (err) {
+
+                console.error(err);
+
+
+                const message =
+                    err.response?.data
+                        ?.message ||
+                    "Failed to delete expense";
+
+
+                setError(
+                    message
+                );
+
+            } finally {
+
+                setDeletingId(
+                    null
+                );
+            }
+        };
+
+
+    const handleSort = (
+        key
+    ) => {
+
         setSortConfig(
             (previous) => {
+
                 if (
-                    previous.key === key
+                    previous.key ===
+                    key
                 ) {
+
                     return {
                         key,
+
                         direction:
-                            previous.direction ===
+                            previous
+                                .direction ===
                                 "asc"
+
                                 ? "desc"
+
                                 : "asc",
                     };
                 }
+
 
                 return {
                     key,
@@ -376,76 +763,100 @@ const Expenses = () => {
         );
     };
 
+
     const getSortIndicator = (
         key
     ) => {
+
         if (
-            sortConfig.key !== key
+            sortConfig.key !==
+            key
         ) {
             return null;
         }
 
+
         return (
             <span className="sort-indicator">
-                {sortConfig.direction ===
-                    "asc"
-                    ? "↑"
-                    : "↓"}
+                {
+                    sortConfig.direction ===
+                        "asc"
+
+                        ? "↑"
+
+                        : "↓"
+                }
             </span>
         );
     };
+
 
     const normalizedSearch =
         searchTerm
             .trim()
             .toLowerCase();
 
+
     const filteredExpenses =
         expenses.filter(
             (expense) => {
+
                 const description =
                     expense.description
                         ?.toLowerCase() ||
                     "";
+
 
                 const vendorName =
                     expense.vendorName
                         ?.toLowerCase() ||
                     "";
 
+
                 const paidBy =
                     expense.paidBy
                         ?.toLowerCase() ||
                     "";
 
+
                 const matchesSearch =
                     !normalizedSearch ||
+
                     description.includes(
                         normalizedSearch
                     ) ||
+
                     vendorName.includes(
                         normalizedSearch
                     ) ||
+
                     paidBy.includes(
                         normalizedSearch
                     );
 
+
                 const matchesCategory =
                     categoryFilter ===
                     "ALL" ||
+
                     expense.category ===
                     categoryFilter;
+
 
                 const matchesPaymentMode =
                     paymentModeFilter ===
                     "ALL" ||
+
                     expense.paymentMode ===
                     paymentModeFilter;
 
+
                 const matchesDate =
                     !dateFilter ||
+
                     expense.expenseDate ===
                     dateFilter;
+
 
                 return (
                     matchesSearch &&
@@ -456,150 +867,250 @@ const Expenses = () => {
             }
         );
 
+
     const sortedExpenses = [
         ...filteredExpenses,
-    ].sort((a, b) => {
-        let first;
-        let second;
+    ].sort(
+        (
+            firstExpense,
+            secondExpense
+        ) => {
 
-        if (
-            sortConfig.key ===
-            "amount"
-        ) {
-            first = Number(
-                a.amount || 0
-            );
+            let first;
+            let second;
 
-            second = Number(
-                b.amount || 0
-            );
 
-            const comparison =
-                first - second;
+            if (
+                sortConfig.key ===
+                "amount"
+            ) {
 
-            return sortConfig.direction ===
-                "asc"
-                ? comparison
-                : -comparison;
-        }
+                first =
+                    Number(
+                        firstExpense
+                            .amount ||
+                        0
+                    );
 
-        if (
-            sortConfig.key ===
-            "expenseDate"
-        ) {
-            first =
-                a.expenseDate || "";
 
-            second =
-                b.expenseDate || "";
+                second =
+                    Number(
+                        secondExpense
+                            .amount ||
+                        0
+                    );
+
+
+                const comparison =
+                    first -
+                    second;
+
+
+                return (
+                    sortConfig.direction ===
+                        "asc"
+
+                        ? comparison
+
+                        : -comparison
+                );
+            }
+
+
+            if (
+                sortConfig.key ===
+                "expenseDate"
+            ) {
+
+                first =
+                    firstExpense
+                        .expenseDate ||
+                    "";
+
+
+                second =
+                    secondExpense
+                        .expenseDate ||
+                    "";
+
+
+                const comparison =
+                    first.localeCompare(
+                        second
+                    );
+
+
+                return (
+                    sortConfig.direction ===
+                        "asc"
+
+                        ? comparison
+
+                        : -comparison
+                );
+            }
+
+
+            if (
+                sortConfig.key ===
+                "category"
+            ) {
+
+                first =
+                    getCategoryName(
+                        firstExpense.category
+                    );
+
+
+                second =
+                    getCategoryName(
+                        secondExpense.category
+                    );
+
+            } else {
+
+                first =
+                    String(
+                        firstExpense[
+                        sortConfig.key
+                        ] ?? ""
+                    );
+
+
+                second =
+                    String(
+                        secondExpense[
+                        sortConfig.key
+                        ] ?? ""
+                    );
+            }
+
 
             const comparison =
                 first.localeCompare(
-                    second
+                    second,
+                    undefined,
+                    {
+                        numeric: true,
+                        sensitivity:
+                            "base",
+                    }
                 );
 
-            return sortConfig.direction ===
-                "asc"
-                ? comparison
-                : -comparison;
+
+            return (
+                sortConfig.direction ===
+                    "asc"
+
+                    ? comparison
+
+                    : -comparison
+            );
         }
+    );
 
-        first =
-            String(
-                a[sortConfig.key] ??
-                ""
-            );
-
-        second =
-            String(
-                b[sortConfig.key] ??
-                ""
-            );
-
-        const comparison =
-            first.localeCompare(
-                second,
-                undefined,
-                {
-                    numeric: true,
-                    sensitivity: "base",
-                }
-            );
-
-        return sortConfig.direction ===
-            "asc"
-            ? comparison
-            : -comparison;
-    });
-
-    const filteredTotalExpense =
-        filteredExpenses.reduce(
-            (
-                total,
-                expense
-            ) =>
-                total +
-                Number(
-                    expense.amount || 0
-                ),
-            0
-        );
 
     const clearFilters = () => {
+
         setSearchTerm("");
-        setCategoryFilter("ALL");
-        setPaymentModeFilter("ALL");
+
+        setCategoryFilter(
+            "ALL"
+        );
+
+        setPaymentModeFilter(
+            "ALL"
+        );
+
         setDateFilter("");
     };
 
+
     const filtersActive =
         searchTerm.trim() !== "" ||
-        categoryFilter !== "ALL" ||
-        paymentModeFilter !== "ALL" ||
+
+        categoryFilter !==
+        "ALL" ||
+
+        paymentModeFilter !==
+        "ALL" ||
+
         dateFilter !== "";
+
 
     return (
         <div className="page-container">
+
             <div className="page-header">
+
                 <div>
+
                     <h1>
                         Expenses
                     </h1>
 
                     <p>
-                        {selectedEvent
-                            ? `Record and track spending for ${selectedEvent.name}`
-                            : "Select an event to manage expenses"}
+                        {
+                            selectedEvent
+
+                                ? `Record and track spending for ${selectedEvent.name}`
+
+                                : "Select an event to manage expenses"
+                        }
                     </p>
+
                 </div>
+
             </div>
 
+
             {eventReadOnly && (
+
                 <div className="info-message">
+
                     This event is{" "}
+
                     <strong>
-                        {selectedEvent.status.toLowerCase()}
+                        {
+                            selectedEvent
+                                .status
+                                .toLowerCase()
+                        }
                     </strong>
-                    . Financial records are
-                    read-only.
+
+                    . Financial records are read-only.
+
                 </div>
             )}
 
+
             <form
                 className="form-card"
-                onSubmit={handleSubmit}
+                onSubmit={
+                    handleSubmit
+                }
             >
+
                 <h2>
-                    {editingId !== null
-                        ? "Edit Expense"
-                        : "Add Expense"}
+                    {
+                        editingId !==
+                            null
+
+                            ? "Edit Expense"
+
+                            : "Add Expense"
+                    }
                 </h2>
 
+
                 <div className="form-grid">
+
                     <div className="form-field">
+
                         <label>
                             Category
                         </label>
+
 
                         <select
                             name="category"
@@ -611,32 +1122,57 @@ const Expenses = () => {
                             }
                             required
                             disabled={
-                                eventReadOnly
+                                eventReadOnly ||
+                                loadingCategories ||
+                                expenseCategories
+                                    .length === 0
                             }
                         >
-                            {ExpenseCategories.map(
-                                (
-                                    category
-                                ) => (
-                                    <option
-                                        key={
-                                            category
-                                        }
-                                        value={
-                                            category
-                                        }
-                                    >
-                                        {category.replaceAll(
-                                            "_",
-                                            " "
-                                        )}
-                                    </option>
-                                )
-                            )}
+
+                            {
+                                loadingCategories
+                                    ? (
+                                        <option value="">
+                                            Loading categories...
+                                        </option>
+                                    )
+
+                                    : expenseCategories
+                                        .length === 0
+                                        ? (
+                                            <option value="">
+                                                No active categories
+                                            </option>
+                                        )
+
+                                        : expenseCategories.map(
+                                            (
+                                                category
+                                            ) => (
+
+                                                <option
+                                                    key={
+                                                        category.id
+                                                    }
+                                                    value={
+                                                        category.code
+                                                    }
+                                                >
+                                                    {
+                                                        category.name
+                                                    }
+                                                </option>
+                                            )
+                                        )
+                            }
+
                         </select>
+
                     </div>
 
+
                     <div className="form-field">
+
                         <label>
                             Date
                         </label>
@@ -655,9 +1191,12 @@ const Expenses = () => {
                                 eventReadOnly
                             }
                         />
+
                     </div>
 
+
                     <div className="form-field form-field-full">
+
                         <label>
                             Description
                         </label>
@@ -676,9 +1215,12 @@ const Expenses = () => {
                                 eventReadOnly
                             }
                         />
+
                     </div>
 
+
                     <div className="form-field">
+
                         <label>
                             Vendor
                         </label>
@@ -696,9 +1238,12 @@ const Expenses = () => {
                                 eventReadOnly
                             }
                         />
+
                     </div>
 
+
                     <div className="form-field">
+
                         <label>
                             Amount
                         </label>
@@ -720,9 +1265,12 @@ const Expenses = () => {
                                 eventReadOnly
                             }
                         />
+
                     </div>
 
+
                     <div className="form-field">
+
                         <label>
                             Payment Mode
                         </label>
@@ -740,6 +1288,7 @@ const Expenses = () => {
                                 eventReadOnly
                             }
                         >
+
                             <option value="CASH">
                                 Cash
                             </option>
@@ -751,10 +1300,14 @@ const Expenses = () => {
                             <option value="BANK">
                                 Bank
                             </option>
+
                         </select>
+
                     </div>
 
+
                     <div className="form-field">
+
                         <label>
                             Paid By
                         </label>
@@ -772,9 +1325,12 @@ const Expenses = () => {
                                 eventReadOnly
                             }
                         />
+
                     </div>
 
+
                     <div className="form-field form-field-full">
+
                         <label>
                             Payment Reference
                         </label>
@@ -783,7 +1339,8 @@ const Expenses = () => {
                             name="paymentReference"
                             placeholder="UPI / Bank reference"
                             value={
-                                form.paymentReference
+                                form
+                                    .paymentReference
                             }
                             onChange={
                                 handleChange
@@ -792,9 +1349,12 @@ const Expenses = () => {
                                 eventReadOnly
                             }
                         />
+
                     </div>
 
+
                     <div className="form-field form-field-full">
+
                         <label>
                             Notes
                         </label>
@@ -812,54 +1372,83 @@ const Expenses = () => {
                                 eventReadOnly
                             }
                         />
+
                     </div>
+
                 </div>
 
+
                 <div className="form-actions">
+
                     <button
                         className="primary-button"
                         type="submit"
                         disabled={
                             loading ||
                             !selectedEventId ||
-                            eventReadOnly
+                            eventReadOnly ||
+                            loadingCategories ||
+                            expenseCategories
+                                .length === 0
                         }
                     >
-                        {loading
-                            ? "Saving..."
-                            : editingId !==
-                                null
-                                ? "Update Expense"
-                                : "Add Expense"}
+
+                        {
+                            loading
+
+                                ? "Saving..."
+
+                                : editingId !==
+                                    null
+
+                                    ? "Update Expense"
+
+                                    : "Add Expense"
+                        }
+
                     </button>
 
+
                     {editingId !== null && (
+
                         <button
                             type="button"
                             className="secondary-button"
                             onClick={
                                 handleCancelEdit
                             }
-                            disabled={loading}
+                            disabled={
+                                loading
+                            }
                         >
+
                             Cancel
+
                         </button>
                     )}
+
                 </div>
+
             </form>
 
+
             {error && (
+
                 <div className="error-message">
                     {error}
                 </div>
             )}
 
+
             <div className="table-card">
+
                 <h2>
                     Expense List
                 </h2>
 
+
                 <div className="filter-toolbar">
+
                     <input
                         className="search-input"
                         type="text"
@@ -867,69 +1456,74 @@ const Expenses = () => {
                         value={
                             searchTerm
                         }
-                        onChange={(
-                            event
-                        ) =>
-                            setSearchTerm(
-                                event.target
-                                    .value
-                            )
+                        onChange={
+                            (event) =>
+                                setSearchTerm(
+                                    event.target
+                                        .value
+                                )
                         }
                     />
+
 
                     <select
                         className="filter-select"
                         value={
                             categoryFilter
                         }
-                        onChange={(
-                            event
-                        ) =>
-                            setCategoryFilter(
-                                event.target
-                                    .value
-                            )
+                        onChange={
+                            (event) =>
+                                setCategoryFilter(
+                                    event.target
+                                        .value
+                                )
                         }
                     >
+
                         <option value="ALL">
                             All Categories
                         </option>
 
-                        {ExpenseCategories.map(
-                            (
-                                category
-                            ) => (
-                                <option
-                                    key={
-                                        category
-                                    }
-                                    value={
-                                        category
-                                    }
-                                >
-                                    {category.replaceAll(
-                                        "_",
-                                        " "
-                                    )}
-                                </option>
+
+                        {
+                            expenseCategories.map(
+                                (
+                                    category
+                                ) => (
+
+                                    <option
+                                        key={
+                                            category.id
+                                        }
+                                        value={
+                                            category.code
+                                        }
+                                    >
+                                        {
+                                            category.name
+                                        }
+                                    </option>
+                                )
                             )
-                        )}
+                        }
+
                     </select>
+
 
                     <select
                         className="filter-select"
                         value={
                             paymentModeFilter
                         }
-                        onChange={(
-                            event
-                        ) =>
-                            setPaymentModeFilter(
-                                event.target
-                                    .value
-                            )
+                        onChange={
+                            (event) =>
+                                setPaymentModeFilter(
+                                    event.target
+                                        .value
+                                )
                         }
                     >
+
                         <option value="ALL">
                             All Payment Modes
                         </option>
@@ -945,7 +1539,9 @@ const Expenses = () => {
                         <option value="BANK">
                             Bank
                         </option>
+
                     </select>
+
 
                     <input
                         className="filter-date"
@@ -953,17 +1549,18 @@ const Expenses = () => {
                         value={
                             dateFilter
                         }
-                        onChange={(
-                            event
-                        ) =>
-                            setDateFilter(
-                                event.target
-                                    .value
-                            )
+                        onChange={
+                            (event) =>
+                                setDateFilter(
+                                    event.target
+                                        .value
+                                )
                         }
                     />
 
+
                     {filtersActive && (
+
                         <button
                             type="button"
                             className="secondary-button"
@@ -971,230 +1568,291 @@ const Expenses = () => {
                                 clearFilters
                             }
                         >
+
                             Clear Filters
+
                         </button>
                     )}
+
                 </div>
 
-                <div className="expense-summary-card">
-                    <span>
-                        Total Expense
-                    </span>
 
-                    <strong>
-                        ₹
-                        {filteredTotalExpense.toFixed(
-                            2
-                        )}
-                    </strong>
-                </div>
+                {
+                    loadingExpenses
 
-                {loadingExpenses ? (
-                    <p>
-                        Loading expenses...
-                    </p>
-                ) : expenses.length ===
-                    0 ? (
-                    <p>
-                        No expenses recorded
-                        for this event yet.
-                    </p>
-                ) : filteredExpenses.length ===
-                    0 ? (
-                    <p>
-                        No expenses match the
-                        selected filters.
-                    </p>
-                ) : (
-                    <div className="table-wrapper">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th
-                                        className="sortable-header"
-                                        onClick={() =>
-                                            handleSort(
-                                                "expenseDate"
-                                            )
-                                        }
-                                    >
-                                        Date
-                                        {getSortIndicator(
-                                            "expenseDate"
-                                        )}
-                                    </th>
+                        ? (
+                            <p>
+                                Loading expenses...
+                            </p>
+                        )
 
-                                    <th
-                                        className="sortable-header"
-                                        onClick={() =>
-                                            handleSort(
-                                                "category"
-                                            )
-                                        }
-                                    >
-                                        Category
-                                        {getSortIndicator(
-                                            "category"
-                                        )}
-                                    </th>
+                        : expenses.length ===
+                            0
 
-                                    <th
-                                        className="sortable-header"
-                                        onClick={() =>
-                                            handleSort(
-                                                "description"
-                                            )
-                                        }
-                                    >
-                                        Description
-                                        {getSortIndicator(
-                                            "description"
-                                        )}
-                                    </th>
+                            ? (
+                                <p>
+                                    No expenses recorded for this event yet.
+                                </p>
+                            )
 
-                                    <th
-                                        className="sortable-header"
-                                        onClick={() =>
-                                            handleSort(
-                                                "vendorName"
-                                            )
-                                        }
-                                    >
-                                        Vendor
-                                        {getSortIndicator(
-                                            "vendorName"
-                                        )}
-                                    </th>
+                            : filteredExpenses
+                                .length === 0
 
-                                    <th
-                                        className="sortable-header"
-                                        onClick={() =>
-                                            handleSort(
-                                                "paymentMode"
-                                            )
-                                        }
-                                    >
-                                        Mode
-                                        {getSortIndicator(
-                                            "paymentMode"
-                                        )}
-                                    </th>
+                                ? (
+                                    <p>
+                                        No expenses match the selected filters.
+                                    </p>
+                                )
 
-                                    <th
-                                        className="sortable-header"
-                                        onClick={() =>
-                                            handleSort(
-                                                "amount"
-                                            )
-                                        }
-                                    >
-                                        Amount
-                                        {getSortIndicator(
-                                            "amount"
-                                        )}
-                                    </th>
+                                : (
+                                    <div className="table-wrapper">
 
-                                    <th>
-                                        Actions
-                                    </th>
-                                </tr>
-                            </thead>
+                                        <table>
 
-                            <tbody>
-                                {sortedExpenses.map(
-                                    (
-                                        expense
-                                    ) => (
-                                        <tr
-                                            key={
-                                                expense.id
-                                            }
-                                        >
-                                            <td>
-                                                {
-                                                    expense.expenseDate
-                                                }
-                                            </td>
+                                            <thead>
 
-                                            <td>
-                                                {expense.category.replaceAll(
-                                                    "_",
-                                                    " "
-                                                )}
-                                            </td>
+                                                <tr>
 
-                                            <td>
-                                                {
-                                                    expense.description
-                                                }
-                                            </td>
-
-                                            <td>
-                                                {expense.vendorName ||
-                                                    "-"}
-                                            </td>
-
-                                            <td>
-                                                {
-                                                    expense.paymentMode
-                                                }
-                                            </td>
-
-                                            <td>
-                                                ₹
-                                                {
-                                                    expense.amount
-                                                }
-                                            </td>
-
-                                            <td>
-                                                <div className="table-actions">
-                                                    <button
-                                                        type="button"
-                                                        className="secondary-button"
+                                                    <th
+                                                        className="sortable-header"
                                                         onClick={() =>
-                                                            handleEdit(
-                                                                expense
+                                                            handleSort(
+                                                                "expenseDate"
                                                             )
                                                         }
-                                                        disabled={
-                                                            eventReadOnly
-                                                        }
                                                     >
-                                                        Edit
-                                                    </button>
-
-                                                    <button
-                                                        type="button"
-                                                        className="danger-button"
-                                                        onClick={() =>
-                                                            handleDelete(
-                                                                expense.id
+                                                        Date
+                                                        {
+                                                            getSortIndicator(
+                                                                "expenseDate"
                                                             )
                                                         }
-                                                        disabled={
-                                                            eventReadOnly ||
-                                                            deletingId ===
-                                                            expense.id
+                                                    </th>
+
+
+                                                    <th
+                                                        className="sortable-header"
+                                                        onClick={() =>
+                                                            handleSort(
+                                                                "category"
+                                                            )
                                                         }
                                                     >
-                                                        {deletingId ===
-                                                            expense.id
-                                                            ? "Deleting..."
-                                                            : "Delete"}
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    )
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
+                                                        Category
+                                                        {
+                                                            getSortIndicator(
+                                                                "category"
+                                                            )
+                                                        }
+                                                    </th>
+
+
+                                                    <th
+                                                        className="sortable-header"
+                                                        onClick={() =>
+                                                            handleSort(
+                                                                "description"
+                                                            )
+                                                        }
+                                                    >
+                                                        Description
+                                                        {
+                                                            getSortIndicator(
+                                                                "description"
+                                                            )
+                                                        }
+                                                    </th>
+
+
+                                                    <th
+                                                        className="sortable-header"
+                                                        onClick={() =>
+                                                            handleSort(
+                                                                "vendorName"
+                                                            )
+                                                        }
+                                                    >
+                                                        Vendor
+                                                        {
+                                                            getSortIndicator(
+                                                                "vendorName"
+                                                            )
+                                                        }
+                                                    </th>
+
+
+                                                    <th
+                                                        className="sortable-header"
+                                                        onClick={() =>
+                                                            handleSort(
+                                                                "paymentMode"
+                                                            )
+                                                        }
+                                                    >
+                                                        Mode
+                                                        {
+                                                            getSortIndicator(
+                                                                "paymentMode"
+                                                            )
+                                                        }
+                                                    </th>
+
+
+                                                    <th
+                                                        className="sortable-header"
+                                                        onClick={() =>
+                                                            handleSort(
+                                                                "amount"
+                                                            )
+                                                        }
+                                                    >
+                                                        Amount
+                                                        {
+                                                            getSortIndicator(
+                                                                "amount"
+                                                            )
+                                                        }
+                                                    </th>
+
+
+                                                    <th>
+                                                        Actions
+                                                    </th>
+
+                                                </tr>
+
+                                            </thead>
+
+
+                                            <tbody>
+
+                                                {
+                                                    sortedExpenses.map(
+                                                        (
+                                                            expense
+                                                        ) => (
+
+                                                            <tr
+                                                                key={
+                                                                    expense.id
+                                                                }
+                                                            >
+
+                                                                <td>
+                                                                    {
+                                                                        expense.expenseDate
+                                                                    }
+                                                                </td>
+
+
+                                                                <td>
+                                                                    {
+                                                                        expense.categoryName ||
+                                                                        getCategoryName(
+                                                                            expense.category
+                                                                        )
+                                                                    }
+                                                                </td>
+
+
+                                                                <td>
+                                                                    {
+                                                                        expense.description
+                                                                    }
+                                                                </td>
+
+
+                                                                <td>
+                                                                    {
+                                                                        expense.vendorName ||
+                                                                        "-"
+                                                                    }
+                                                                </td>
+
+
+                                                                <td>
+                                                                    {
+                                                                        expense.paymentMode
+                                                                    }
+                                                                </td>
+
+
+                                                                <td>
+                                                                    ₹
+                                                                    {
+                                                                        expense.amount
+                                                                    }
+                                                                </td>
+
+
+                                                                <td>
+
+                                                                    <div className="table-actions">
+
+                                                                        <button
+                                                                            type="button"
+                                                                            className="secondary-button"
+                                                                            onClick={() =>
+                                                                                handleEdit(
+                                                                                    expense
+                                                                                )
+                                                                            }
+                                                                            disabled={
+                                                                                eventReadOnly
+                                                                            }
+                                                                        >
+                                                                            Edit
+                                                                        </button>
+
+
+                                                                        <button
+                                                                            type="button"
+                                                                            className="danger-button"
+                                                                            onClick={() =>
+                                                                                handleDelete(
+                                                                                    expense.id
+                                                                                )
+                                                                            }
+                                                                            disabled={
+                                                                                eventReadOnly ||
+                                                                                deletingId ===
+                                                                                expense.id
+                                                                            }
+                                                                        >
+
+                                                                            {
+                                                                                deletingId ===
+                                                                                    expense.id
+
+                                                                                    ? "Deleting..."
+
+                                                                                    : "Delete"
+                                                                            }
+
+                                                                        </button>
+
+                                                                    </div>
+
+                                                                </td>
+
+                                                            </tr>
+                                                        )
+                                                    )
+                                                }
+
+                                            </tbody>
+
+                                        </table>
+
+                                    </div>
+                                )
+                }
+
             </div>
+
         </div>
     );
 };
+
 
 export default Expenses;

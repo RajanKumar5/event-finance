@@ -1,0 +1,124 @@
+.contributor-status-summary {
+    display: grid;
+
+    grid-template-columns:
+        repeat(auto-fit,
+            minmax(180px, 1fr));
+
+    gap: 14px;
+
+    margin-bottom: 24px;
+}
+
+.contributor-status-card {
+    padding: 18px;
+
+    background: var(--bg-card);
+
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--primary);
+    border-radius: 12px;
+
+    box-shadow: var(--shadow-card);
+}
+
+.contributor-status-card span {
+    display: block;
+
+    margin-bottom: 8px;
+
+    color: var(--text-secondary);
+
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.contributor-status-card strong {
+    font-size: 24px;
+
+    color: var(--text-primary);
+}
+
+.status-paid-card {
+    border-left-color:
+        var(--success);
+}
+
+.status-unpaid-card {
+    border-left-color:
+        var(--expense);
+}
+
+.contributor-status-toolbar {
+    display: flex;
+    align-items: center;
+
+    gap: 10px;
+
+    flex-wrap: wrap;
+
+    margin-bottom: 14px;
+}
+
+.contributor-status-toolbar .search-input {
+    flex: 1;
+
+    min-width: 240px;
+
+    max-width: none;
+}
+
+.contributor-status-result-count {
+    margin-bottom: 14px;
+
+    color: var(--text-secondary);
+
+    font-size: 13px;
+}
+
+.contribution-status-badge {
+    display: inline-flex;
+
+    padding: 5px 9px;
+
+    border-radius: 999px;
+
+    font-size: 12px;
+    font-weight: 600;
+
+    white-space: nowrap;
+}
+
+.contribution-status-paid {
+    background: var(--success-soft);
+
+    color: var(--success-dark);
+}
+
+.contribution-status-unpaid {
+    background: var(--expense-soft);
+
+    color: var(--expense-dark);
+}
+
+@media (max-width: 600px) {
+    .contributor-status-toolbar {
+        flex-direction: column;
+
+        align-items: stretch;
+    }
+
+    .contributor-status-toolbar .search-input,
+    .contributor-status-toolbar .filter-select,
+    .contributor-status-toolbar .secondary-button {
+        width: 100%;
+
+        max-width: none;
+    }
+}
+
+@media (max-width: 600px) {
+    .contributor-export-button {
+        width: 100%;
+    }
+}

@@ -32,6 +32,10 @@ public record EventDashboardResponse(
         long totalContributorCount,
         long uniqueContributorCount,
 
-        List<DailyFinanceTrendResponse> dailyTrend
+        List<DailyFinanceTrendResponse> dailyTrend,
+
+        List<AreaCollectionSummaryResponse> areaCollections,
+
+        List<ExpenseCategorySummaryResponse> expenseCategories
 ) {
 }

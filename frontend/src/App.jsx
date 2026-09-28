@@ -5,11 +5,16 @@ import {
 } from "react-router-dom";
 
 import AppLayout from "./layouts/AppLayout";
+
 import Dashboard from "./pages/Dashboard";
 import Contributors from "./pages/Contributors";
 import Contributions from "./pages/Contributions";
+import ContributorStatus from "./pages/ContributorStatus";
+import ContributorHistory from "./pages/ContributorHistory";
 import Expenses from "./pages/Expenses";
 import Events from "./pages/Events";
+import Reports from "./pages/Reports";
+import Settings from "./pages/Settings";
 
 function App() {
   return (
@@ -41,6 +46,16 @@ function App() {
         />
 
         <Route
+          path="/contributor-status"
+          element={<ContributorStatus />}
+        />
+
+        <Route
+          path="/contributor-history"
+          element={<ContributorHistory />}
+        />
+
+        <Route
           path="/expenses"
           element={<Expenses />}
         />
@@ -48,6 +63,16 @@ function App() {
         <Route
           path="/events"
           element={<Events />}
+        />
+
+        <Route
+          path="/reports"
+          element={<Reports />}
+        />
+
+        <Route
+          path="/settings"
+          element={<Settings />}
         />
       </Route>
     </Routes>

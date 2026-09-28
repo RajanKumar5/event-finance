@@ -1,856 +1,2369 @@
-import { useEffect, useState } from "react";
+import {
+    useEffect,
+    useMemo,
+    useState,
+} from "react";
+
+
 
 import {
+
     createContributor,
+
     deleteContributor,
+
     getAllContributors,
+
     updateContributor,
+
 } from "../api/contributorApi";
 
-const AREA_OPTIONS = [
-    "ITA",
-    "ITB",
-    "ITC",
 
-    "MEA",
-    "MEB",
-    "MEC",
-    "MED",
-    "MEE",
-    "MEF",
-    "MEG",
-    "MEH",
-    "MEI",
 
-    "CVA",
-    "CVB",
+import {
+    getAreas,
+} from "../api/masterDataApi";
 
-    "PPA",
-    "PPB",
-    "PPC",
-    "PPD",
-    "PPE",
-];
+import Pagination from "../components/Pagination";
 
-const emptyForm = {
+const createEmptyForm = (defaultArea = "") => ({
     name: "",
     houseNumber: "",
-    area: "ITA",
+    area: defaultArea,
     phone: "",
     notes: "",
-};
+});
+
+
+
+
 
 const Contributors = () => {
-    const [contributors, setContributors] =
-        useState([]);
-
-    const [form, setForm] =
-        useState(emptyForm);
-
-    const [editingId, setEditingId] =
-        useState(null);
-
-    const [loading, setLoading] =
-        useState(false);
-
-    const [deletingId, setDeletingId] =
-        useState(null);
-
-    const [error, setError] =
-        useState("");
-
-    const [searchTerm, setSearchTerm] =
-        useState("");
-
-    const [selectedAreas, setSelectedAreas] =
-        useState([]);
 
     const [
-        areaDropdownOpen,
-        setAreaDropdownOpen,
+
+        contributors,
+
+        setContributors,
+
+    ] = useState([]);
+
+
+
+    const [
+        areas,
+        setAreas,
+    ] = useState([]);
+
+    const [
+        loadingAreas,
+        setLoadingAreas,
     ] = useState(false);
 
-    const [sortConfig, setSortConfig] =
-        useState({
-            key: "name",
-            direction: "asc",
+    const [
+        form,
+        setForm,
+    ] = useState(
+        createEmptyForm()
+    );
+
+
+
+    const [
+
+        editingId,
+
+        setEditingId,
+
+    ] = useState(null);
+
+
+
+    const [
+
+        loading,
+
+        setLoading,
+
+    ] = useState(false);
+
+
+
+    const [
+
+        deletingId,
+
+        setDeletingId,
+
+    ] = useState(null);
+
+
+
+    const [
+
+        error,
+
+        setError,
+
+    ] = useState("");
+
+
+
+    const [
+
+        searchTerm,
+
+        setSearchTerm,
+
+    ] = useState("");
+
+
+
+    const [
+
+        selectedAreas,
+
+        setSelectedAreas,
+
+    ] = useState([]);
+
+
+
+    const [
+
+        areaDropdownOpen,
+
+        setAreaDropdownOpen,
+
+    ] = useState(false);
+
+
+
+    /*
+
+     * Sorting
+
+     */
+
+    const [
+
+        sortConfig,
+
+        setSortConfig,
+
+    ] = useState({
+
+        key: "name",
+
+        direction: "asc",
+
+    });
+
+
+
+    /*
+
+     * Pagination
+
+     */
+
+    const [
+
+        currentPage,
+
+        setCurrentPage,
+
+    ] = useState(1);
+
+
+
+    const [
+
+        pageSize,
+
+        setPageSize,
+
+    ] = useState(10);
+
+
+    const activeAreas = useMemo(
+        () =>
+            areas
+                .filter((area) => area.active !== false)
+                .sort((first, second) =>
+                    first.name.localeCompare(second.name)
+                ),
+        [areas]
+    );
+
+    const filterAreas = useMemo(() => {
+        const areaMap = new Map();
+
+        areas.forEach((area) => {
+            areaMap.set(area.code, area);
         });
 
-    const fetchContributors = async () => {
+        contributors.forEach((contributor) => {
+            if (
+                !contributor.area ||
+                areaMap.has(contributor.area)
+            ) {
+                return;
+            }
+
+            areaMap.set(contributor.area, {
+                code: contributor.area,
+                name:
+                    contributor.areaName ||
+                    contributor.area,
+                active: false,
+            });
+        });
+
+        return Array.from(areaMap.values()).sort(
+            (first, second) =>
+                first.name.localeCompare(second.name)
+        );
+    }, [areas, contributors]);
+
+    const formAreaOptions = useMemo(() => {
+        const optionMap = new Map();
+
+        activeAreas.forEach((area) => {
+            optionMap.set(area.code, area);
+        });
+
+        if (
+            editingId !== null &&
+            form.area &&
+            !optionMap.has(form.area)
+        ) {
+            const currentArea = areas.find(
+                (area) => area.code === form.area
+            );
+
+            optionMap.set(
+                form.area,
+                currentArea || {
+                    code: form.area,
+                    name: form.area,
+                    active: false,
+                }
+            );
+        }
+
+        return Array.from(optionMap.values()).sort(
+            (first, second) =>
+                first.name.localeCompare(second.name)
+        );
+    }, [
+        activeAreas,
+        areas,
+        editingId,
+        form.area,
+    ]);
+
+    const getDefaultAreaCode = () =>
+        activeAreas.length > 0
+            ? activeAreas[0].code
+            : "";
+
+    const getAreaDisplayName = (areaCode) => {
+        const area = filterAreas.find(
+            (item) => item.code === areaCode
+        );
+
+        return area?.name || areaCode || "-";
+    };
+
+    const loadAreas = async () => {
         try {
-            setError("");
+            setLoadingAreas(true);
 
-            const data =
-                await getAllContributors();
+            const data = await getAreas(false);
 
-            setContributors(data);
+            setAreas(data);
+
+            const firstActiveArea = data
+                .filter((area) => area.active !== false)
+                .sort((first, second) =>
+                    first.name.localeCompare(second.name)
+                )[0];
+
+            if (firstActiveArea) {
+                setForm((previous) =>
+                    previous.area
+                        ? previous
+                        : {
+                            ...previous,
+                            area: firstActiveArea.code,
+                        }
+                );
+            }
         } catch (err) {
             console.error(err);
 
             setError(
                 err.response?.data?.message ||
-                "Failed to load contributors"
+                "Failed to load areas"
             );
+        } finally {
+            setLoadingAreas(false);
         }
     };
 
+
+
+
+
+
+    const fetchContributors =
+
+        async () => {
+
+            try {
+
+                setError("");
+
+
+
+                const data =
+
+                    await getAllContributors();
+
+
+
+                setContributors(
+
+                    data
+
+                );
+
+
+
+            } catch (err) {
+
+                console.error(err);
+
+
+
+                setError(
+
+                    err.response
+
+                        ?.data
+
+                        ?.message ||
+
+                    "Failed to load contributors"
+
+                );
+
+            }
+
+        };
+
+
+
+
+
     useEffect(() => {
+        loadAreas();
         fetchContributors();
     }, []);
 
-    const handleChange = (event) => {
-        const { name, value } =
-            event.target;
 
-        setForm((previous) => ({
-            ...previous,
-            [name]: value,
-        }));
+
+
+
+    /*
+
+     * Return to first page whenever
+
+     * the filters change.
+
+     */
+
+    useEffect(() => {
+
+        setCurrentPage(1);
+
+
+
+    }, [
+
+        searchTerm,
+
+        selectedAreas,
+
+    ]);
+
+
+
+
+
+    const handleChange = (
+
+        event
+
+    ) => {
+
+        const {
+
+            name,
+
+            value,
+
+        } = event.target;
+
+
+
+        setForm(
+
+            (previous) => ({
+
+                ...previous,
+
+
+
+                [name]:
+
+                    value,
+
+            })
+
+        );
+
     };
 
+
+
+
+
     const resetForm = () => {
-        setForm(emptyForm);
+        setForm(
+            createEmptyForm(
+                getDefaultAreaCode()
+            )
+        );
+
         setEditingId(null);
     };
 
+
+
+
+
     const handleEdit = (
+
         contributor
+
     ) => {
+
         setError("");
+
+
 
         setEditingId(
+
             contributor.id
+
         );
 
+
+
         setForm({
+
             name:
+
                 contributor.name,
 
+
+
             houseNumber:
+
                 contributor.houseNumber,
 
+
+
             area:
+
                 contributor.area,
 
+
+
             phone:
-                contributor.phone || "",
+
+                contributor.phone ||
+
+                "",
+
+
 
             notes:
-                contributor.notes || "",
+
+                contributor.notes ||
+
+                "",
+
         });
+
+
 
         window.scrollTo({
+
             top: 0,
+
             behavior: "smooth",
+
         });
+
     };
 
-    const handleCancelEdit = () => {
-        resetForm();
-        setError("");
-    };
 
-    const handleSubmit = async (
-        event
-    ) => {
-        event.preventDefault();
 
-        try {
-            setLoading(true);
-            setError("");
 
-            if (editingId !== null) {
-                await updateContributor(
-                    editingId,
-                    form
-                );
-            } else {
-                await createContributor(
-                    form
-                );
-            }
+
+    const handleCancelEdit =
+
+        () => {
 
             resetForm();
 
-            await fetchContributors();
-        } catch (err) {
-            console.error(err);
 
-            const message =
-                err.response?.data?.message ||
-                (editingId !== null
-                    ? "Failed to update contributor"
-                    : "Failed to create contributor");
 
-            setError(message);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleDelete = async (
-        id
-    ) => {
-        const shouldDelete =
-            window.confirm(
-                "Are you sure you want to delete this contributor?"
-            );
-
-        if (!shouldDelete) {
-            return;
-        }
-
-        try {
-            setDeletingId(id);
             setError("");
 
-            await deleteContributor(id);
+        };
 
-            if (editingId === id) {
+
+
+
+
+    const handleSubmit =
+
+        async (event) => {
+
+            event.preventDefault();
+
+
+
+            try {
+
+                setLoading(true);
+
+
+
+                setError("");
+
+
+
+                if (
+
+                    editingId !==
+
+                    null
+
+                ) {
+
+                    await updateContributor(
+
+                        editingId,
+
+                        form
+
+                    );
+
+
+
+                } else {
+
+                    await createContributor(
+
+                        form
+
+                    );
+
+                }
+
+
+
                 resetForm();
+
+
+
+                await fetchContributors();
+
+
+
+            } catch (err) {
+
+                console.error(err);
+
+
+
+                const message =
+
+                    err.response
+
+                        ?.data
+
+                        ?.message ||
+
+                    (editingId !==
+
+                        null
+
+                        ? "Failed to update contributor"
+
+                        : "Failed to create contributor");
+
+
+
+                setError(
+
+                    message
+
+                );
+
+
+
+            } finally {
+
+                setLoading(false);
+
             }
 
-            await fetchContributors();
-        } catch (err) {
-            console.error(err);
+        };
 
-            const message =
-                err.response?.data?.message ||
-                "Failed to delete contributor";
 
-            setError(message);
-        } finally {
-            setDeletingId(null);
-        }
-    };
+
+
+
+    const handleDelete =
+
+        async (id) => {
+
+            const shouldDelete =
+
+                window.confirm(
+
+                    "Are you sure you want to delete this contributor?"
+
+                );
+
+
+
+            if (
+
+                !shouldDelete
+
+            ) {
+
+                return;
+
+            }
+
+
+
+            try {
+
+                setDeletingId(
+
+                    id
+
+                );
+
+
+
+                setError("");
+
+
+
+                await deleteContributor(
+
+                    id
+
+                );
+
+
+
+                if (
+
+                    editingId ===
+
+                    id
+
+                ) {
+
+                    resetForm();
+
+                }
+
+
+
+                await fetchContributors();
+
+
+
+            } catch (err) {
+
+                console.error(err);
+
+
+
+                const message =
+
+                    err.response
+
+                        ?.data
+
+                        ?.message ||
+
+                    "Failed to delete contributor";
+
+
+
+                setError(
+
+                    message
+
+                );
+
+
+
+            } finally {
+
+                setDeletingId(
+
+                    null
+
+                );
+
+            }
+
+        };
+
+
+
+
 
     const toggleAreaFilter = (
+
         area
+
     ) => {
+
         setSelectedAreas(
+
             (previous) => {
+
                 if (
-                    previous.includes(area)
+
+                    previous.includes(
+
+                        area
+
+                    )
+
                 ) {
+
                     return previous.filter(
+
                         (
+
                             selectedArea
+
                         ) =>
+
                             selectedArea !==
+
                             area
+
                     );
+
                 }
+
+
 
                 return [
+
                     ...previous,
+
                     area,
+
                 ];
+
             }
+
         );
+
     };
+
+
+
+
 
     const clearFilters = () => {
+
         setSearchTerm("");
+
+
+
         setSelectedAreas([]);
-        setAreaDropdownOpen(false);
+
+
+
+        setAreaDropdownOpen(
+
+            false
+
+        );
+
+
+
+        setCurrentPage(1);
+
     };
 
-    const handleSort = (key) => {
+
+
+
+
+    const handleSort = (
+
+        key
+
+    ) => {
+
         setSortConfig(
+
             (previous) => {
+
                 if (
-                    previous.key === key
+
+                    previous.key ===
+
+                    key
+
                 ) {
+
                     return {
+
                         key,
+
+
+
                         direction:
+
                             previous.direction ===
+
                                 "asc"
+
                                 ? "desc"
+
                                 : "asc",
+
                     };
+
                 }
+
+
 
                 return {
+
                     key,
-                    direction: "asc",
+
+                    direction:
+
+                        "asc",
+
                 };
+
             }
+
         );
+
+
+
+        setCurrentPage(1);
+
     };
+
+
+
+
 
     const getSortIndicator = (
+
         key
+
     ) => {
+
         if (
-            sortConfig.key !== key
+
+            sortConfig.key !==
+
+            key
+
         ) {
+
             return null;
+
         }
 
+
+
         return (
+
             <span className="sort-indicator">
+
                 {sortConfig.direction ===
+
                     "asc"
+
                     ? "↑"
+
                     : "↓"}
+
             </span>
+
         );
+
     };
 
+
+
+
+
     const normalizedSearch =
+
         searchTerm
+
             .trim()
+
             .toLowerCase();
 
+
+
+
+
+    /*
+
+     * Filtering
+
+     */
+
     const filteredContributors =
+
         contributors.filter(
+
             (contributor) => {
+
                 const name =
+
                     contributor.name
+
                         ?.toLowerCase() ||
+
                     "";
+
+
 
                 const address =
+
                     contributor.address
+
                         ?.toLowerCase() ||
+
                     "";
+
+
 
                 const phone =
+
                     contributor.phone
+
                         ?.toLowerCase() ||
+
                     "";
+
+
 
                 const area =
+
                     contributor.area
+
                         ?.toLowerCase() ||
+
                     "";
+
+
 
                 const houseNumber =
-                    contributor.houseNumber
+
+                    contributor
+
+                        .houseNumber
+
                         ?.toLowerCase() ||
+
                     "";
 
+
+
                 const matchesSearch =
+
                     !normalizedSearch ||
+
                     name.includes(
+
                         normalizedSearch
+
                     ) ||
+
                     address.includes(
+
                         normalizedSearch
+
                     ) ||
+
                     phone.includes(
+
                         normalizedSearch
+
                     ) ||
+
                     area.includes(
+
                         normalizedSearch
+
                     ) ||
+
                     houseNumber.includes(
+
                         normalizedSearch
+
                     );
+
+
 
                 const matchesArea =
+
                     selectedAreas.length ===
+
                     0 ||
+
                     selectedAreas.includes(
+
                         contributor.area
+
                     );
 
+
+
                 return (
+
                     matchesSearch &&
+
                     matchesArea
+
                 );
+
             }
+
         );
 
-    const sortedContributors = [
-        ...filteredContributors,
-    ].sort((a, b) => {
-        const first =
-            String(
-                a[sortConfig.key] ??
-                ""
+
+
+
+
+    /*
+
+     * Sorting after filtering
+
+     */
+
+    const sortedContributors =
+
+        [
+
+            ...filteredContributors,
+
+        ].sort(
+
+            (
+
+                firstContributor,
+
+                secondContributor
+
+            ) => {
+
+                const firstValue =
+
+                    String(
+
+                        firstContributor[
+
+                        sortConfig.key
+
+                        ] ??
+
+                        ""
+
+                    );
+
+
+
+                const secondValue =
+
+                    String(
+
+                        secondContributor[
+
+                        sortConfig.key
+
+                        ] ??
+
+                        ""
+
+                    );
+
+
+
+                const comparison =
+
+                    firstValue.localeCompare(
+
+                        secondValue,
+
+                        undefined,
+
+                        {
+
+                            numeric:
+
+                                true,
+
+
+
+                            sensitivity:
+
+                                "base",
+
+                        }
+
+                    );
+
+
+
+                return sortConfig.direction ===
+
+                    "asc"
+
+                    ? comparison
+
+                    : -comparison;
+
+            }
+
+        );
+
+
+
+
+
+    /*
+
+     * Pagination after filtering
+
+     * and sorting.
+
+     */
+
+    const totalPages =
+
+        Math.max(
+
+            1,
+
+            Math.ceil(
+
+                sortedContributors.length /
+
+                pageSize
+
+            )
+
+        );
+
+
+
+
+
+    const safeCurrentPage =
+
+        Math.min(
+
+            currentPage,
+
+            totalPages
+
+        );
+
+
+
+
+
+    const startIndex =
+
+        (safeCurrentPage - 1) *
+
+        pageSize;
+
+
+
+
+
+    const paginatedContributors =
+
+        sortedContributors.slice(
+
+            startIndex,
+
+            startIndex +
+
+            pageSize
+
+        );
+
+
+
+
+
+    const handlePageSizeChange =
+
+        (newPageSize) => {
+
+            setPageSize(
+
+                newPageSize
+
             );
 
-        const second =
-            String(
-                b[sortConfig.key] ??
-                ""
-            );
 
-        const comparison =
-            first.localeCompare(
-                second,
-                undefined,
-                {
-                    numeric: true,
-                    sensitivity: "base",
-                }
-            );
 
-        return sortConfig.direction ===
-            "asc"
-            ? comparison
-            : -comparison;
-    });
+            setCurrentPage(1);
+
+        };
+
+
+
+
 
     const filtersActive =
-        searchTerm.trim() !== "" ||
-        selectedAreas.length > 0;
+
+        searchTerm.trim() !==
+
+        "" ||
+
+        selectedAreas.length >
+
+        0;
+
+
+
+
 
     return (
+
         <div className="page-container">
+
+
+
             <div className="page-header">
+
                 <div>
+
+
+
                     <h1>
+
                         Contributors
+
                     </h1>
 
+
+
                     <p>
+
                         Add and manage contributor details
+
                     </p>
+
+
+
                 </div>
+
             </div>
 
+
+
+
+
             <form
-                onSubmit={handleSubmit}
+
+                onSubmit={
+
+                    handleSubmit
+
+                }
+
                 className="form-card"
+
             >
+
+
+
                 <h2>
-                    {editingId !== null
+
+                    {editingId !==
+
+                        null
+
                         ? "Edit Contributor"
+
                         : "Add Contributor"}
+
                 </h2>
 
+
+
+
+
                 <div className="form-grid">
+
+
+
                     <div className="form-field">
+
+
+
                         <label>
+
                             Name
+
                         </label>
 
+
+
                         <input
+
                             name="name"
+
                             placeholder="Name"
+
                             value={
+
                                 form.name
+
                             }
+
                             onChange={
+
                                 handleChange
+
                             }
+
                             required
+
                         />
+
+
+
                     </div>
 
+
+
+
+
                     <div className="form-field">
+
+
+
                         <label>
+
                             House Number
+
                         </label>
+
+
 
                         <input
+
                             name="houseNumber"
-                            placeholder="House Number"
+
+                            placeholder="House number"
+
                             value={
+
                                 form.houseNumber
+
                             }
+
                             onChange={
+
                                 handleChange
+
                             }
+
                             required
+
                         />
+
+
+
                     </div>
 
+
+
+
+
                     <div className="form-field">
+
+
+
                         <label>
+
                             Area
+
                         </label>
+
+
 
                         <select
                             name="area"
-                            value={
-                                form.area
-                            }
-                            onChange={
-                                handleChange
-                            }
+                            value={form.area}
+                            onChange={handleChange}
                             required
+                            disabled={
+                                loadingAreas ||
+                                formAreaOptions.length === 0
+                            }
                         >
-                            {AREA_OPTIONS.map(
-                                (area) => (
-                                    <option
-                                        key={
-                                            area
-                                        }
-                                        value={
-                                            area
-                                        }
-                                    >
-                                        {
-                                            area
-                                        }
-                                    </option>
-                                )
+                            {formAreaOptions.length === 0 && (
+                                <option value="">
+                                    No active areas available
+                                </option>
                             )}
+
+                            {formAreaOptions.map((area) => (
+                                <option
+                                    key={area.code}
+                                    value={area.code}
+                                >
+                                    {area.name}
+                                    {area.name !== area.code
+                                        ? ` (${area.code})`
+                                        : ""}
+                                    {area.active === false
+                                        ? " - Inactive"
+                                        : ""}
+                                </option>
+                            ))}
                         </select>
+
+
+
                     </div>
+
+
+
+
 
                     <div className="form-field">
+
+
+
                         <label>
+
                             Phone
+
                         </label>
+
+
 
                         <input
+
                             name="phone"
+
                             placeholder="Phone"
+
                             value={
+
                                 form.phone
+
                             }
+
                             onChange={
+
                                 handleChange
+
                             }
+
                         />
+
+
+
                     </div>
+
+
+
+
 
                     <div className="form-field form-field-full">
+
+
+
                         <label>
+
                             Notes
+
                         </label>
 
+
+
                         <textarea
+
                             name="notes"
-                            placeholder="Notes"
+
+                            placeholder="Additional notes"
+
                             value={
+
                                 form.notes
+
                             }
+
                             onChange={
+
                                 handleChange
+
                             }
+
                         />
+
+
+
                     </div>
+
+
+
                 </div>
+
+
+
+
 
                 <div className="form-actions">
+
+
+
                     <button
-                        className="primary-button"
+
                         type="submit"
-                        disabled={loading}
+
+                        className="primary-button"
+
+                        disabled={
+                            loading ||
+                            loadingAreas ||
+                            !form.area
+                        }
+
                     >
+
                         {loading
+
                             ? "Saving..."
+
                             : editingId !==
+
                                 null
+
                                 ? "Update Contributor"
+
                                 : "Add Contributor"}
+
                     </button>
 
-                    {editingId !== null && (
-                        <button
-                            className="secondary-button"
-                            type="button"
-                            onClick={
-                                handleCancelEdit
-                            }
-                            disabled={loading}
-                        >
-                            Cancel
-                        </button>
-                    )}
+
+
+
+
+                    {editingId !==
+
+                        null && (
+
+                            <button
+
+                                type="button"
+
+                                className="secondary-button"
+
+                                onClick={
+
+                                    handleCancelEdit
+
+                                }
+
+                                disabled={
+
+                                    loading
+
+                                }
+
+                            >
+
+                                Cancel
+
+                            </button>
+
+                        )}
+
+
+
                 </div>
+
+
+
             </form>
 
+
+
+
+
             {error && (
+
                 <div className="error-message">
+
                     {error}
+
                 </div>
+
             )}
 
+
+
+
+
             <div className="table-card">
+
+
+
                 <h2>
+
                     Contributor List
+
                 </h2>
 
+
+
+
+
                 <div className="contributor-filter-toolbar">
+
+
+
                     <input
-                        className="search-input"
+
                         type="text"
+
+                        className="search-input"
+
                         placeholder="Search by name, address, area, house number or phone"
+
                         value={
+
                             searchTerm
+
                         }
+
                         onChange={(
+
                             event
+
                         ) =>
+
                             setSearchTerm(
-                                event.target
+
+                                event
+
+                                    .target
+
                                     .value
+
                             )
+
                         }
+
                     />
 
-                    <div className="area-dropdown">
-                        <button
-                            type="button"
-                            className="filter-dropdown-button"
-                            onClick={() =>
-                                setAreaDropdownOpen(
-                                    (
-                                        previous
-                                    ) =>
-                                        !previous
-                                )
-                            }
-                        >
-                            <span>
-                                {selectedAreas.length >
-                                    0
-                                    ? `Areas (${selectedAreas.length})`
-                                    : "Filter by Area"}
-                            </span>
 
-                            <span
-                                className={
-                                    areaDropdownOpen
-                                        ? "dropdown-arrow open"
-                                        : "dropdown-arrow"
-                                }
-                            >
-                                ▾
-                            </span>
+
+
+
+                    <div className="area-dropdown">
+
+
+
+                        <button
+
+                            type="button"
+
+                            className="filter-dropdown-button"
+
+                            onClick={() =>
+
+                                setAreaDropdownOpen(
+
+                                    (
+
+                                        previous
+
+                                    ) =>
+
+                                        !previous
+
+                                )
+
+                            }
+
+                        >
+
+                            {selectedAreas.length ===
+
+                                0
+
+                                ? "All Areas"
+
+                                : `${selectedAreas.length} Area${selectedAreas.length >
+
+                                    1
+
+                                    ? "s"
+
+                                    : ""
+
+                                } Selected`}
+
                         </button>
+
+
+
+
 
                         {areaDropdownOpen && (
+
                             <div className="area-dropdown-menu">
-                                <div className="area-dropdown-title">
-                                    Select Areas
-                                </div>
 
-                                <div className="area-dropdown-options">
-                                    {AREA_OPTIONS.map(
-                                        (
-                                            area
-                                        ) => (
-                                            <label
-                                                key={
-                                                    area
-                                                }
-                                                className="area-checkbox-option"
-                                            >
-                                                <input
-                                                    type="checkbox"
-                                                    checked={selectedAreas.includes(
-                                                        area
-                                                    )}
-                                                    onChange={() =>
-                                                        toggleAreaFilter(
-                                                            area
-                                                        )
-                                                    }
-                                                />
 
-                                                <span>
-                                                    {
-                                                        area
-                                                    }
-                                                </span>
-                                            </label>
-                                        )
-                                    )}
-                                </div>
-                            </div>
-                        )}
-                    </div>
 
-                    {filtersActive && (
-                        <button
-                            type="button"
-                            className="secondary-button clear-filter-button"
-                            onClick={
-                                clearFilters
-                            }
-                        >
-                            Clear Filters
-                        </button>
-                    )}
-                </div>
-
-                {selectedAreas.length >
-                    0 && (
-                        <div className="selected-filter-summary">
-                            <span>
-                                Areas:
-                            </span>
-
-                            {selectedAreas.map(
-                                (area) => (
-                                    <span
-                                        key={
-                                            area
-                                        }
-                                        className="selected-filter-chip"
+                                {filterAreas.map((area) => (
+                                    <label
+                                        key={area.code}
+                                        className="area-dropdown-option"
                                     >
-                                        {area}
-
-                                        <button
-                                            type="button"
-                                            onClick={() =>
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedAreas.includes(
+                                                area.code
+                                            )}
+                                            onChange={() =>
                                                 toggleAreaFilter(
-                                                    area
+                                                    area.code
                                                 )
                                             }
-                                            aria-label={`Remove ${area} filter`}
-                                        >
-                                            ×
-                                        </button>
-                                    </span>
-                                )
-                            )}
-                        </div>
+                                        />
+
+                                        <span>
+                                            {area.name}
+                                            {area.name !== area.code
+                                                ? ` (${area.code})`
+                                                : ""}
+                                            {area.active === false
+                                                ? " - Inactive"
+                                                : ""}
+                                        </span>
+                                    </label>
+                                ))}
+
+
+                            </div>
+
+                        )}
+
+
+
+                    </div>
+
+
+
+
+
+                    {filtersActive && (
+
+                        <button
+
+                            type="button"
+
+                            className="secondary-button"
+
+                            onClick={
+
+                                clearFilters
+
+                            }
+
+                        >
+
+                            Clear Filters
+
+                        </button>
+
                     )}
 
-                {contributors.length ===
-                    0 ? (
-                    <p>
-                        No contributors
-                        available.
-                    </p>
-                ) : filteredContributors.length ===
-                    0 ? (
-                    <p>
-                        No contributors match
-                        the selected filters.
-                    </p>
-                ) : (
-                    <div className="table-wrapper">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th
-                                        className="sortable-header"
-                                        onClick={() =>
-                                            handleSort(
-                                                "name"
-                                            )
+
+
+                </div>
+
+
+
+
+
+                {selectedAreas.length >
+
+                    0 && (
+
+                        <div className="selected-filter-summary">
+
+
+
+                            <span>
+
+                                Areas:
+
+                            </span>
+
+
+
+                            {selectedAreas.map(
+
+                                (
+
+                                    area
+
+                                ) => (
+
+                                    <span
+
+                                        key={
+
+                                            area
+
                                         }
+
+                                        className="selected-filter-chip"
+
                                     >
-                                        Name
-                                        {getSortIndicator(
-                                            "name"
-                                        )}
-                                    </th>
 
-                                    <th
-                                        className="sortable-header"
-                                        onClick={() =>
-                                            handleSort(
-                                                "address"
-                                            )
-                                        }
-                                    >
-                                        Address
-                                        {getSortIndicator(
-                                            "address"
-                                        )}
-                                    </th>
+                                        {getAreaDisplayName(area)}
 
-                                    <th
-                                        className="sortable-header"
-                                        onClick={() =>
-                                            handleSort(
-                                                "phone"
-                                            )
-                                        }
-                                    >
-                                        Phone
-                                        {getSortIndicator(
-                                            "phone"
-                                        )}
-                                    </th>
 
-                                    <th>
-                                        Notes
-                                    </th>
 
-                                    <th>
-                                        Actions
-                                    </th>
-                                </tr>
-                            </thead>
+                                        <button
 
-                            <tbody>
-                                {sortedContributors.map(
-                                    (
-                                        contributor
-                                    ) => (
-                                        <tr
-                                            key={
-                                                contributor.id
+                                            type="button"
+
+                                            onClick={() =>
+
+                                                toggleAreaFilter(
+
+                                                    area
+
+                                                )
+
                                             }
+
                                         >
-                                            <td>
-                                                {
-                                                    contributor.name
+
+                                            ×
+
+                                        </button>
+
+                                    </span>
+
+                                )
+
+                            )}
+
+
+
+                        </div>
+
+                    )}
+
+
+
+
+
+                <div className="filtered-summary-card">
+
+
+
+                    <span>
+
+                        Contributors
+
+                    </span>
+
+
+
+                    <strong>
+
+                        {
+
+                            filteredContributors.length
+
+                        }
+
+                    </strong>
+
+
+
+                    <span>
+
+                        of{" "}
+
+                        {
+
+                            contributors.length
+
+                        }{" "}
+
+                        total
+
+                    </span>
+
+
+
+                </div>
+
+
+
+
+
+                {contributors.length ===
+
+                    0 ? (
+
+                    <p>
+
+                        No contributors available.
+
+                    </p>
+
+
+
+                ) : filteredContributors.length ===
+
+                    0 ? (
+
+                    <p>
+
+                        No contributors match
+
+                        the selected filters.
+
+                    </p>
+
+
+
+                ) : (
+
+                    <>
+
+
+
+                        <div className="table-wrapper">
+
+
+
+                            <table>
+
+
+
+                                <thead>
+
+                                    <tr>
+
+
+
+                                        <th
+
+                                            className="sortable-header"
+
+                                            onClick={() =>
+
+                                                handleSort(
+
+                                                    "name"
+
+                                                )
+
+                                            }
+
+                                        >
+
+                                            Name
+
+
+
+                                            {getSortIndicator(
+
+                                                "name"
+
+                                            )}
+
+                                        </th>
+
+
+
+
+
+                                        <th
+
+                                            className="sortable-header"
+
+                                            onClick={() =>
+
+                                                handleSort(
+
+                                                    "address"
+
+                                                )
+
+                                            }
+
+                                        >
+
+                                            Address
+
+
+
+                                            {getSortIndicator(
+
+                                                "address"
+
+                                            )}
+
+                                        </th>
+
+
+
+
+
+                                        <th
+
+                                            className="sortable-header"
+
+                                            onClick={() =>
+
+                                                handleSort(
+
+                                                    "phone"
+
+                                                )
+
+                                            }
+
+                                        >
+
+                                            Phone
+
+
+
+                                            {getSortIndicator(
+
+                                                "phone"
+
+                                            )}
+
+                                        </th>
+
+
+
+
+
+                                        <th>
+
+                                            Notes
+
+                                        </th>
+
+
+
+
+
+                                        <th>
+
+                                            Actions
+
+                                        </th>
+
+
+
+                                    </tr>
+
+                                </thead>
+
+
+
+
+
+                                <tbody>
+
+
+
+                                    {paginatedContributors.map(
+
+                                        (
+
+                                            contributor
+
+                                        ) => (
+
+                                            <tr
+
+                                                key={
+
+                                                    contributor.id
+
                                                 }
-                                            </td>
 
-                                            <td>
-                                                {
-                                                    contributor.address
-                                                }
-                                            </td>
+                                            >
 
-                                            <td>
-                                                {contributor.phone ||
-                                                    "-"}
-                                            </td>
 
-                                            <td>
-                                                {contributor.notes ||
-                                                    "-"}
-                                            </td>
 
-                                            <td>
-                                                <div className="table-actions">
-                                                    <button
-                                                        type="button"
-                                                        className="secondary-button"
-                                                        onClick={() =>
-                                                            handleEdit(
-                                                                contributor
-                                                            )
-                                                        }
-                                                    >
-                                                        Edit
-                                                    </button>
+                                                <td>
 
-                                                    <button
-                                                        type="button"
-                                                        className="danger-button"
-                                                        onClick={() =>
-                                                            handleDelete(
+                                                    {
+
+                                                        contributor.name
+
+                                                    }
+
+                                                </td>
+
+
+
+
+
+                                                <td>
+
+                                                    {
+
+                                                        contributor.address
+
+                                                    }
+
+                                                </td>
+
+
+
+
+
+                                                <td>
+
+                                                    {contributor.phone ||
+
+                                                        "-"}
+
+                                                </td>
+
+
+
+
+
+                                                <td>
+
+                                                    {contributor.notes ||
+
+                                                        "-"}
+
+                                                </td>
+
+
+
+
+
+                                                <td>
+
+
+
+                                                    <div className="table-actions">
+
+
+
+                                                        <button
+
+                                                            type="button"
+
+                                                            className="secondary-button"
+
+                                                            onClick={() =>
+
+                                                                handleEdit(
+
+                                                                    contributor
+
+                                                                )
+
+                                                            }
+
+                                                        >
+
+                                                            Edit
+
+                                                        </button>
+
+
+
+
+
+                                                        <button
+
+                                                            type="button"
+
+                                                            className="danger-button"
+
+                                                            onClick={() =>
+
+                                                                handleDelete(
+
+                                                                    contributor.id
+
+                                                                )
+
+                                                            }
+
+                                                            disabled={
+
+                                                                deletingId ===
+
                                                                 contributor.id
-                                                            )
-                                                        }
-                                                        disabled={
-                                                            deletingId ===
-                                                            contributor.id
-                                                        }
-                                                    >
-                                                        {deletingId ===
-                                                            contributor.id
-                                                            ? "Deleting..."
-                                                            : "Delete"}
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    )
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
+
+                                                            }
+
+                                                        >
+
+                                                            {deletingId ===
+
+                                                                contributor.id
+
+                                                                ? "Deleting..."
+
+                                                                : "Delete"}
+
+                                                        </button>
+
+
+
+                                                    </div>
+
+
+
+                                                </td>
+
+
+
+                                            </tr>
+
+                                        )
+
+                                    )}
+
+
+
+                                </tbody>
+
+
+
+                            </table>
+
+
+
+                        </div>
+
+
+
+
+
+                        <Pagination
+
+                            currentPage={
+
+                                safeCurrentPage
+
+                            }
+
+                            totalItems={
+
+                                sortedContributors.length
+
+                            }
+
+                            pageSize={
+
+                                pageSize
+
+                            }
+
+                            onPageChange={
+
+                                setCurrentPage
+
+                            }
+
+                            onPageSizeChange={
+
+                                handlePageSizeChange
+
+                            }
+
+                        />
+
+
+
+                    </>
+
                 )}
+
+
+
             </div>
+
+
+
         </div>
+
     );
+
 };
+
+
+
+
 
 export default Contributors;

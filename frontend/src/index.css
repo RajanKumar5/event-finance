@@ -48,6 +48,7 @@
   box-sizing: border-box;
 }
 
+
 body {
   margin: 0;
 
@@ -299,7 +300,8 @@ body {
   display: grid;
 
   grid-template-columns:
-    repeat(3, minmax(0, 1fr));
+    repeat(3,
+      minmax(0, 1fr));
 
   gap: 16px;
 
@@ -507,10 +509,7 @@ body {
   border-color: var(--primary);
 
   box-shadow:
-    0 0 0 3px rgba(79,
-      70,
-      229,
-      0.12);
+    0 0 0 3px rgba(79, 70, 229, 0.12);
 }
 
 .form-field input:disabled,
@@ -797,10 +796,7 @@ tbody tr:hover {
   border-color: var(--primary);
 
   box-shadow:
-    0 0 0 3px rgba(79,
-      70,
-      229,
-      0.12);
+    0 0 0 3px rgba(79, 70, 229, 0.12);
 }
 
 .filter-toolbar,
@@ -845,10 +841,7 @@ tbody tr:hover {
   border-color: var(--primary);
 
   box-shadow:
-    0 0 0 3px rgba(79,
-      70,
-      229,
-      0.12);
+    0 0 0 3px rgba(79, 70, 229, 0.12);
 }
 
 
@@ -972,6 +965,129 @@ tbody tr:hover {
 }
 
 .area-checkbox-option input {
+  width: auto;
+
+  margin: 0;
+
+  accent-color:
+    var(--primary);
+
+  cursor: pointer;
+}
+
+
+/* =========================
+   Contribution Area Filter Dropdown
+   ========================= */
+
+.area-filter-dropdown {
+  position: relative;
+}
+
+.area-filter-button {
+  min-width: 150px;
+
+  position: relative;
+
+  padding: 10px 36px 10px 12px;
+
+  border:
+    1px solid var(--border-strong);
+  border-radius: 8px;
+
+  background: white;
+  color: var(--text-primary);
+
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 400;
+
+  text-align: left;
+
+  cursor: pointer;
+}
+
+.area-filter-button::after {
+  content: "";
+
+  position: absolute;
+
+  top: 50%;
+  right: 12px;
+
+  width: 0;
+  height: 0;
+
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 5px solid #475569;
+
+  transform: translateY(-25%);
+
+  pointer-events: none;
+}
+
+.area-filter-button:hover {
+  border-color: var(--border-strong);
+}
+
+.area-filter-button:focus {
+  outline: none;
+
+  border-color: var(--primary);
+
+  box-shadow:
+    0 0 0 3px rgba(79, 70, 229, 0.12);
+}
+
+
+.area-filter-menu {
+  position: absolute;
+
+  top: calc(100% + 6px);
+  right: 0;
+
+  z-index: 30;
+
+  width: 260px;
+  max-height: 340px;
+
+  overflow-y: auto;
+
+  padding: 12px;
+
+  border: 1px solid var(--border);
+  border-radius: 10px;
+
+  background: white;
+
+  box-shadow:
+    var(--shadow-dropdown);
+}
+
+.area-filter-option {
+  display: flex;
+  align-items: center;
+
+  gap: 7px;
+
+  padding: 7px 8px;
+
+  border-radius: 6px;
+
+  font-size: 13px;
+
+  color: #334155;
+
+  cursor: pointer;
+}
+
+.area-filter-option:hover {
+  background:
+    var(--primary-soft);
+}
+
+.area-filter-option input {
   width: auto;
 
   margin: 0;
@@ -1109,7 +1225,6 @@ tbody tr:hover {
    ========================= */
 
 @media (max-width: 768px) {
-
   .app-layout {
     display: block;
   }
@@ -1239,7 +1354,6 @@ tbody tr:hover {
    ========================= */
 
 @media (max-width: 600px) {
-
   .form-grid {
     grid-template-columns: 1fr;
   }
@@ -1291,13 +1405,16 @@ tbody tr:hover {
   .filter-date,
   .area-dropdown,
   .filter-dropdown-button,
+  .area-filter-dropdown,
+  .area-filter-button,
   .filter-toolbar .secondary-button,
   .contributor-filter-toolbar .secondary-button {
     width: 100%;
     max-width: none;
   }
 
-  .area-dropdown-menu {
+  .area-dropdown-menu,
+  .area-filter-menu {
     left: 0;
     right: auto;
 
@@ -1311,7 +1428,6 @@ tbody tr:hover {
    ========================= */
 
 @media (max-width: 480px) {
-
   .dashboard-grid {
     grid-template-columns:
       repeat(2,
@@ -1336,6 +1452,7 @@ tbody tr:hover {
     font-size: 11px;
   }
 }
+
 
 .expense-summary-card {
   display: flex;
@@ -1364,6 +1481,7 @@ tbody tr:hover {
 
   color: var(--expense-dark);
 }
+
 
 /* =========================
    Dashboard Charts
@@ -1475,5 +1593,30 @@ tbody tr:hover {
 @media (max-width: 480px) {
   .trend-chart-container {
     height: 260px;
+  }
+}
+
+.area-chart-container {
+  width: 100%;
+
+  height:
+    max(300px,
+      calc(var(--area-count, 6) * 42px));
+}
+
+.area-chart-container {
+  width: 100%;
+  height: 420px;
+}
+
+@media (max-width: 768px) {
+  .area-chart-container {
+    height: 380px;
+  }
+}
+
+@media (max-width: 480px) {
+  .area-chart-container {
+    height: 340px;
   }
 }

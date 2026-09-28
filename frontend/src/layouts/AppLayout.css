@@ -1,0 +1,198 @@
+.nav-label-mobile {
+    display: none;
+}
+
+.event-selector-message {
+    margin: 6px 0 0;
+
+    color: #cbd5e1;
+
+    font-size: 13px;
+}
+
+
+/* =========================
+   Mobile Navigation
+   ========================= */
+
+@media (max-width: 768px) {
+
+    .sidebar {
+        position: fixed;
+
+        left: 0;
+        right: 0;
+        bottom: 0;
+        top: auto;
+
+        width: 100%;
+        min-width: 0;
+        height: auto;
+
+        padding: 7px 6px;
+
+        background:
+            var(--sidebar);
+
+        z-index: 1000;
+
+        box-shadow:
+            0 -4px 18px rgba(15,
+                23,
+                42,
+                0.18);
+    }
+
+    .sidebar-logo,
+    .desktop-event-selector {
+        display: none;
+    }
+
+    .sidebar-nav {
+        display: flex;
+        flex-direction: row;
+
+        justify-content: flex-start;
+
+        gap: 5px;
+
+        width: 100%;
+
+        overflow-x: auto;
+        overflow-y: hidden;
+
+        padding: 1px 2px 4px;
+
+        scrollbar-width: none;
+
+        scroll-behavior: smooth;
+
+        scroll-snap-type:
+            x proximity;
+    }
+
+    .sidebar-nav::-webkit-scrollbar {
+        display: none;
+    }
+
+    .sidebar-nav a {
+        flex:
+            0 0 auto;
+
+        min-width: 82px;
+
+        padding: 10px 9px;
+
+        border-radius: 8px;
+
+        text-align: center;
+
+        font-size: 11px;
+        font-weight: 500;
+
+        white-space: nowrap;
+
+        scroll-snap-align:
+            start;
+    }
+
+    .sidebar-nav a.active {
+        background:
+            var(--sidebar-active);
+
+        color: white;
+
+        box-shadow:
+            0 3px 10px rgba(79,
+                70,
+                229,
+                0.3);
+    }
+
+    .nav-label-desktop {
+        display: none;
+    }
+
+    .nav-label-mobile {
+        display: inline;
+    }
+
+    .app-content {
+        padding-bottom: 74px;
+    }
+
+    .mobile-event-selector {
+        display: block;
+
+        margin: 12px 16px 0;
+        padding: 12px;
+
+        background:
+            var(--bg-card);
+
+        border:
+            1px solid var(--border);
+
+        border-radius: 10px;
+
+        box-shadow:
+            var(--shadow-card);
+    }
+
+    .mobile-event-selector label {
+        display: block;
+
+        margin-bottom: 6px;
+
+        color:
+            var(--text-secondary);
+
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .mobile-event-selector select {
+        width: 100%;
+
+        padding: 9px 10px;
+
+        border:
+            1px solid var(--border-strong);
+
+        border-radius: 8px;
+
+        background: white;
+
+        color:
+            var(--text-primary);
+
+        font-family: inherit;
+        font-size: 13px;
+    }
+
+    .mobile-event-selector .event-selector-message {
+        color:
+            var(--text-secondary);
+    }
+}
+
+
+/* =========================
+   Small Phones
+   ========================= */
+
+@media (max-width: 480px) {
+
+    .sidebar-nav a {
+        min-width: 76px;
+
+        padding:
+            9px 7px;
+
+        font-size: 10.5px;
+    }
+
+    .app-content {
+        padding-bottom: 70px;
+    }
+}

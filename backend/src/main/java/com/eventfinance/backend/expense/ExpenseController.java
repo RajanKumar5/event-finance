@@ -10,76 +10,130 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+
 @RestController
 @RequestMapping("/api/v1/expenses")
 public class ExpenseController {
 
     private final ExpenseService expenseService;
 
-    public ExpenseController(ExpenseService expenseService) {
-        this.expenseService = expenseService;
+
+    public ExpenseController(
+            ExpenseService expenseService
+    ) {
+        this.expenseService =
+                expenseService;
     }
+
 
     @PostMapping
-    public ResponseEntity<ExpenseResponse> createExpense(
+    public ResponseEntity<ExpenseResponse>
+    createExpense(
             @Valid @RequestBody ExpenseRequest request
     ) {
+
         return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(expenseService.createExpense(request));
+                .status(
+                        HttpStatus.CREATED
+                )
+                .body(
+                        expenseService
+                                .createExpense(
+                                        request
+                                )
+                );
     }
+
 
     @GetMapping
-    public ResponseEntity<List<ExpenseResponse>> getAllExpenses() {
+    public ResponseEntity<List<ExpenseResponse>>
+    getAllExpenses() {
+
         return ResponseEntity.ok(
-                expenseService.getAllExpenses()
+                expenseService
+                        .getAllExpenses()
         );
     }
+
 
     @GetMapping("/event/{eventId}")
-    public ResponseEntity<List<ExpenseResponse>> getExpensesByEvent(
+    public ResponseEntity<List<ExpenseResponse>>
+    getExpensesByEvent(
             @PathVariable Long eventId
     ) {
+
         return ResponseEntity.ok(
-                expenseService.getExpensesByEvent(eventId)
+                expenseService
+                        .getExpensesByEvent(
+                                eventId
+                        )
         );
     }
+
 
     @GetMapping("/{id}")
-    public ResponseEntity<ExpenseResponse> getExpenseById(
+    public ResponseEntity<ExpenseResponse>
+    getExpenseById(
             @PathVariable Long id
     ) {
+
         return ResponseEntity.ok(
-                expenseService.getExpenseById(id)
+                expenseService
+                        .getExpenseById(
+                                id
+                        )
         );
     }
 
+
     @PutMapping("/{id}")
-    public ResponseEntity<ExpenseResponse> updateExpense(
+    public ResponseEntity<ExpenseResponse>
+    updateExpense(
             @PathVariable Long id,
             @Valid @RequestBody ExpenseRequest request
     ) {
+
         return ResponseEntity.ok(
-                expenseService.updateExpense(id, request)
+                expenseService
+                        .updateExpense(
+                                id,
+                                request
+                        )
         );
     }
 
+
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteExpense(
+    public ResponseEntity<Void>
+    deleteExpense(
             @PathVariable Long id
     ) {
-        expenseService.deleteExpense(id);
 
-        return ResponseEntity.noContent().build();
+        expenseService
+                .deleteExpense(
+                        id
+                );
+
+
+        return ResponseEntity
+                .noContent()
+                .build();
     }
 
-    @GetMapping("/event/{eventId}/summary-by-category")
+
+    @GetMapping(
+            "/event/{eventId}/summary-by-category"
+    )
     public ResponseEntity<List<ExpenseCategorySummary>>
     getExpenseSummaryByCategory(
             @PathVariable Long eventId
     ) {
+
         return ResponseEntity.ok(
-                expenseService.getExpenseSummaryByCategory(eventId)
+                expenseService
+                        .getExpenseSummaryByCategory(
+                                eventId
+                        )
         );
     }
 }
