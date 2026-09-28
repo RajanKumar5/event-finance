@@ -14,6 +14,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -60,6 +61,14 @@ public class SecurityConfig {
                         .withHttpOnlyFalse();
 
 
+        /*
+         * React/Axios sends the raw CSRF token
+         * in the X-XSRF-TOKEN request header.
+         */
+        CsrfTokenRequestAttributeHandler csrfRequestHandler =
+                new CsrfTokenRequestAttributeHandler();
+
+
         http
 
                 .cors(
@@ -71,6 +80,9 @@ public class SecurityConfig {
                                 csrf
                                         .csrfTokenRepository(
                                                 csrfTokenRepository
+                                        )
+                                        .csrfTokenRequestHandler(
+                                                csrfRequestHandler
                                         )
                                         .ignoringRequestMatchers(
                                                 "/api/v1/auth/login"
@@ -102,11 +114,8 @@ public class SecurityConfig {
 
 
                                         /*
-                                         * User administration is always
+                                         * User administration is
                                          * ADMIN-only.
-                                         *
-                                         * This must appear before generic
-                                         * /api/v1/** rules.
                                          */
                                         .requestMatchers(
                                                 "/api/v1/users/**"
@@ -117,12 +126,8 @@ public class SecurityConfig {
 
 
                                         /*
-                                         * Audit history is ADMIN-only.
-                                         *
-                                         * This must appear before the generic
-                                         * GET /api/v1/** rule, otherwise
-                                         * EDITOR and VIEWER would also be
-                                         * allowed to read audit history.
+                                         * Audit history is
+                                         * ADMIN-only.
                                          */
                                         .requestMatchers(
                                                 "/api/v1/audit-logs/**"
@@ -186,7 +191,6 @@ public class SecurityConfig {
 
                                         /*
                                          * Normal application writes:
-                                         *
                                          * ADMIN + EDITOR.
                                          */
                                         .requestMatchers(
@@ -228,7 +232,6 @@ public class SecurityConfig {
 
                                         /*
                                          * Normal reads:
-                                         *
                                          * ADMIN + EDITOR + VIEWER.
                                          */
                                         .requestMatchers(
@@ -270,7 +273,7 @@ public class SecurityConfig {
                                 exception
 
                                         /*
-                                         * User is not logged in.
+                                         * User is not authenticated.
                                          */
                                         .authenticationEntryPoint(
                                                 (
@@ -306,8 +309,8 @@ public class SecurityConfig {
 
 
                                         /*
-                                         * User is logged in,
-                                         * but does not have permission.
+                                         * User is authenticated but
+                                         * does not have permission.
                                          */
                                         .accessDeniedHandler(
                                                 (
@@ -355,6 +358,14 @@ public class SecurityConfig {
                 new CorsConfiguration();
 
 
+        /*
+         * Used when React is running locally
+         * through Vite.
+         *
+         * In production React and the API are
+         * served through the same Nginx origin,
+         * so CORS is not required there.
+         */
         configuration.setAllowedOrigins(
                 List.of(
                         "http://localhost:5173"

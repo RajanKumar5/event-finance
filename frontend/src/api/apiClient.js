@@ -2,7 +2,7 @@ import axios from "axios";
 
 
 const API_BASE_URL =
-    "http://localhost:8080/api/v1";
+    "/api/v1";
 
 
 const apiClient =
@@ -10,10 +10,6 @@ const apiClient =
         baseURL:
             API_BASE_URL,
 
-        /*
-         * Required so the browser sends
-         * JSESSIONID with API requests.
-         */
         withCredentials:
             true,
     });
@@ -37,16 +33,8 @@ export const clearCsrfToken =
     };
 
 
-const loadCsrfToken =
+export const loadCsrfToken =
     async () => {
-
-        if (
-            csrfToken
-        ) {
-
-            return;
-        }
-
 
         const response =
             await axios.get(
@@ -54,21 +42,43 @@ const loadCsrfToken =
                 {
                     withCredentials:
                         true,
+
+                    headers: {
+                        "Cache-Control":
+                            "no-cache",
+                    },
                 }
             );
+
+
+        if (
+            !response.data ||
+            !response.data.token
+        ) {
+
+            throw new Error(
+                "CSRF token was not returned by backend"
+            );
+        }
 
 
         csrfToken =
             response.data.token;
 
+
         csrfHeaderName =
             response.data.headerName ||
             "X-XSRF-TOKEN";
+
+
+        return csrfToken;
     };
 
 
 apiClient.interceptors.request.use(
-    async (config) => {
+    async (
+        config
+    ) => {
 
         const method =
             (
@@ -89,11 +99,6 @@ apiClient.interceptors.request.use(
             );
 
 
-        /*
-         * Backend intentionally permits login
-         * without a CSRF token because the user
-         * does not yet have a session.
-         */
         const isLoginRequest =
             config.url
                 ?.includes(
@@ -106,12 +111,21 @@ apiClient.interceptors.request.use(
             !isLoginRequest
         ) {
 
+            /*
+             * Get a fresh CSRF token before
+             * every modifying request.
+             */
             await loadCsrfToken();
 
 
+            config.headers =
+                config.headers ||
+                {};
+
+
             if (
-                config.headers
-                    ?.set
+                typeof config.headers.set ===
+                "function"
             ) {
 
                 config.headers.set(
@@ -121,12 +135,10 @@ apiClient.interceptors.request.use(
 
             } else {
 
-                config.headers = {
-                    ...config.headers,
-
-                    [csrfHeaderName]:
-                        csrfToken,
-                };
+                config.headers[
+                    csrfHeaderName
+                ] =
+                    csrfToken;
             }
         }
 

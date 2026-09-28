@@ -1,5 +1,6 @@
 import apiClient, {
     clearCsrfToken,
+    loadCsrfToken,
 } from "./apiClient";
 
 
@@ -9,10 +10,6 @@ export const login =
         password
     ) => {
 
-        /*
-         * Always start a new authentication
-         * flow with a fresh CSRF state.
-         */
         clearCsrfToken();
 
 
@@ -24,6 +21,16 @@ export const login =
                     password,
                 }
             );
+
+
+        /*
+         * Login creates the authenticated
+         * HTTP session.
+         *
+         * Get the CSRF token associated with
+         * that authenticated session.
+         */
+        await loadCsrfToken();
 
 
         return response.data;
