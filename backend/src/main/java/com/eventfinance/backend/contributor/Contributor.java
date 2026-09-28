@@ -2,11 +2,20 @@ package com.eventfinance.backend.contributor;
 
 import com.eventfinance.backend.masterdata.area.AreaMaster;
 import jakarta.persistence.*;
+import org.springframework.data.annotation.CreatedBy;
+import org.springframework.data.annotation.LastModifiedBy;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 
+
 @Entity
-@Table(name = "contributor")
+@Table(
+        name = "contributor"
+)
+@EntityListeners(
+        AuditingEntityListener.class
+)
 public class Contributor {
 
     @Id
@@ -34,8 +43,7 @@ public class Contributor {
     /*
      * Dynamic Area relationship.
      *
-     * The old "area" String column has been removed.
-     * area_id is now the single source of truth.
+     * area_id is the single source of truth.
      */
     @ManyToOne(
             fetch = FetchType.LAZY,
@@ -75,14 +83,35 @@ public class Contributor {
     private LocalDateTime updatedAt;
 
 
+    @CreatedBy
+    @Column(
+            name = "created_by",
+            length = 100,
+            updatable = false
+    )
+    private String createdBy;
+
+
+    @LastModifiedBy
+    @Column(
+            name = "updated_by",
+            length = 100
+    )
+    private String updatedBy;
+
+
     @PrePersist
     protected void onCreate() {
 
         LocalDateTime now =
                 LocalDateTime.now();
 
-        createdAt = now;
-        updatedAt = now;
+
+        createdAt =
+                now;
+
+        updatedAt =
+                now;
     }
 
 
@@ -95,6 +124,7 @@ public class Contributor {
 
 
     public Long getId() {
+
         return id;
     }
 
@@ -102,11 +132,14 @@ public class Contributor {
     public void setId(
             Long id
     ) {
-        this.id = id;
+
+        this.id =
+                id;
     }
 
 
     public String getName() {
+
         return name;
     }
 
@@ -114,11 +147,14 @@ public class Contributor {
     public void setName(
             String name
     ) {
-        this.name = name;
+
+        this.name =
+                name;
     }
 
 
     public String getHouseNumber() {
+
         return houseNumber;
     }
 
@@ -126,31 +162,29 @@ public class Contributor {
     public void setHouseNumber(
             String houseNumber
     ) {
+
         this.houseNumber =
                 houseNumber;
     }
 
 
-    /*
-     * Keep this convenience getter because
-     * existing services/dashboard/frontend
-     * expect contributor.getArea().
-     *
-     * It now reads only from AreaMaster.
-     */
     public String getArea() {
 
         if (
                 areaMaster == null
         ) {
+
             return null;
         }
 
-        return areaMaster.getCode();
+
+        return areaMaster
+                .getCode();
     }
 
 
     public AreaMaster getAreaMaster() {
+
         return areaMaster;
     }
 
@@ -158,12 +192,14 @@ public class Contributor {
     public void setAreaMaster(
             AreaMaster areaMaster
     ) {
+
         this.areaMaster =
                 areaMaster;
     }
 
 
     public String getPhone() {
+
         return phone;
     }
 
@@ -171,11 +207,14 @@ public class Contributor {
     public void setPhone(
             String phone
     ) {
-        this.phone = phone;
+
+        this.phone =
+                phone;
     }
 
 
     public String getNotes() {
+
         return notes;
     }
 
@@ -183,24 +222,36 @@ public class Contributor {
     public void setNotes(
             String notes
     ) {
-        this.notes = notes;
+
+        this.notes =
+                notes;
     }
 
 
     public LocalDateTime getCreatedAt() {
+
         return createdAt;
     }
 
 
     public LocalDateTime getUpdatedAt() {
+
         return updatedAt;
     }
 
 
-    /*
-     * Convenience address used by existing
-     * contribution/contributor responses.
-     */
+    public String getCreatedBy() {
+
+        return createdBy;
+    }
+
+
+    public String getUpdatedBy() {
+
+        return updatedBy;
+    }
+
+
     public String getAddress() {
 
         String area =
@@ -211,6 +262,7 @@ public class Contributor {
                 houseNumber == null ||
                         houseNumber.isBlank()
         ) {
+
             return area;
         }
 
@@ -219,6 +271,7 @@ public class Contributor {
                 area == null ||
                         area.isBlank()
         ) {
+
             return houseNumber;
         }
 

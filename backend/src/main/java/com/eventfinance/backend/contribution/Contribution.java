@@ -7,10 +7,14 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.data.annotation.CreatedBy;
+import org.springframework.data.annotation.LastModifiedBy;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+
 
 @Entity
 @Table(
@@ -18,9 +22,15 @@ import java.time.LocalDateTime;
         uniqueConstraints = {
                 @UniqueConstraint(
                         name = "uk_event_receipt",
-                        columnNames = {"event_id", "receipt_number"}
+                        columnNames = {
+                                "event_id",
+                                "receipt_number"
+                        }
                 )
         }
+)
+@EntityListeners(
+        AuditingEntityListener.class
 )
 @Getter
 @Setter
@@ -28,16 +38,33 @@ import java.time.LocalDateTime;
 public class Contribution {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(
+            strategy = GenerationType.IDENTITY
+    )
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "event_id", nullable = false)
+
+    @ManyToOne(
+            fetch = FetchType.LAZY,
+            optional = false
+    )
+    @JoinColumn(
+            name = "event_id",
+            nullable = false
+    )
     private Event event;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "contributor_id", nullable = false)
+
+    @ManyToOne(
+            fetch = FetchType.LAZY,
+            optional = false
+    )
+    @JoinColumn(
+            name = "contributor_id",
+            nullable = false
+    )
     private Contributor contributor;
+
 
     @Column(
             name = "receipt_number",
@@ -46,19 +73,24 @@ public class Contribution {
     )
     private String receiptNumber;
 
+
     @Column(
             name = "payment_date",
             nullable = false
     )
     private LocalDate paymentDate;
 
-    @Enumerated(EnumType.STRING)
+
+    @Enumerated(
+            EnumType.STRING
+    )
     @Column(
             name = "payment_mode",
             nullable = false,
             length = 20
     )
     private PaymentMode paymentMode;
+
 
     @Column(
             name = "amount_paid",
@@ -68,11 +100,13 @@ public class Contribution {
     )
     private BigDecimal amountPaid;
 
+
     @Column(
             name = "upi_paid_to",
             length = 150
     )
     private String upiPaidTo;
+
 
     @Column(
             name = "payment_reference",
@@ -80,8 +114,12 @@ public class Contribution {
     )
     private String paymentReference;
 
-    @Column(length = 500)
+
+    @Column(
+            length = 500
+    )
     private String notes;
+
 
     @Column(
             name = "created_at",
@@ -90,21 +128,50 @@ public class Contribution {
     )
     private LocalDateTime createdAt;
 
+
     @Column(
             name = "updated_at",
             nullable = false
     )
     private LocalDateTime updatedAt;
 
+
+    @CreatedBy
+    @Column(
+            name = "created_by",
+            length = 100,
+            updatable = false
+    )
+    private String createdBy;
+
+
+    @LastModifiedBy
+    @Column(
+            name = "updated_by",
+            length = 100
+    )
+    private String updatedBy;
+
+
     @PrePersist
     public void prePersist() {
-        LocalDateTime now = LocalDateTime.now();
-        createdAt = now;
-        updatedAt = now;
+
+        LocalDateTime now =
+                LocalDateTime.now();
+
+
+        createdAt =
+                now;
+
+        updatedAt =
+                now;
     }
+
 
     @PreUpdate
     public void preUpdate() {
-        updatedAt = LocalDateTime.now();
+
+        updatedAt =
+                LocalDateTime.now();
     }
 }

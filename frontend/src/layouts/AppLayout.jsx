@@ -68,6 +68,12 @@ const NAV_ITEMS = [
         mobileLabel: "Users",
         adminOnly: true,
     },
+    {
+        path: "/audit-history",
+        desktopLabel: "Audit History",
+        mobileLabel: "Audit",
+        adminOnly: true,
+    },
 ];
 
 

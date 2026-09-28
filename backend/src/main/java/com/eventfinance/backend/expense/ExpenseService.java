@@ -1,5 +1,6 @@
 package com.eventfinance.backend.expense;
 
+import com.eventfinance.backend.audit.AuditLogService;
 import com.eventfinance.backend.common.exception.ResourceNotFoundException;
 import com.eventfinance.backend.event.Event;
 import com.eventfinance.backend.event.EventRepository;
@@ -13,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -21,18 +23,28 @@ import java.util.TreeMap;
 @Service
 public class ExpenseService {
 
-    private final ExpenseRepository expenseRepository;
+    private static final String AUDIT_ENTITY_TYPE =
+            "EXPENSE";
 
-    private final EventRepository eventRepository;
+
+    private final ExpenseRepository
+            expenseRepository;
+
+    private final EventRepository
+            eventRepository;
 
     private final ExpenseCategoryMasterRepository
             expenseCategoryRepository;
+
+    private final AuditLogService
+            auditLogService;
 
 
     public ExpenseService(
             ExpenseRepository expenseRepository,
             EventRepository eventRepository,
-            ExpenseCategoryMasterRepository expenseCategoryRepository
+            ExpenseCategoryMasterRepository expenseCategoryRepository,
+            AuditLogService auditLogService
     ) {
 
         this.expenseRepository =
@@ -43,6 +55,9 @@ public class ExpenseService {
 
         this.expenseCategoryRepository =
                 expenseCategoryRepository;
+
+        this.auditLogService =
+                auditLogService;
     }
 
 
@@ -98,6 +113,15 @@ public class ExpenseService {
                 expenseRepository.save(
                         expense
                 );
+
+
+        auditLogService.logCreate(
+                AUDIT_ENTITY_TYPE,
+                savedExpense.getId(),
+                snapshot(
+                        savedExpense
+                )
+        );
 
 
         return mapToResponse(
@@ -299,26 +323,23 @@ public class ExpenseService {
                 );
 
 
+        Map<String, Object> oldValues =
+                snapshot(
+                        expense
+                );
+
+
         Event newEvent =
                 getEvent(
                         request.eventId()
                 );
 
 
-        /*
-         * The current event must be writable
-         * because this existing expense belongs
-         * to it.
-         */
         validateEventWritable(
                 expense.getEvent()
         );
 
 
-        /*
-         * If the expense is being moved to another
-         * event, that destination must also be writable.
-         */
         validateEventWritable(
                 newEvent
         );
@@ -344,14 +365,6 @@ public class ExpenseService {
                                 );
 
 
-        /*
-         * Historical expenses may continue using
-         * a category that later becomes inactive.
-         *
-         * Only changing to a different category
-         * requires the destination category to
-         * currently be active.
-         */
         if (
                 !keepingCurrentCategory
         ) {
@@ -385,6 +398,16 @@ public class ExpenseService {
                 );
 
 
+        auditLogService.logUpdate(
+                AUDIT_ENTITY_TYPE,
+                updatedExpense.getId(),
+                oldValues,
+                snapshot(
+                        updatedExpense
+                )
+        );
+
+
         return mapToResponse(
                 updatedExpense
         );
@@ -410,6 +433,19 @@ public class ExpenseService {
 
         validateEventWritable(
                 expense.getEvent()
+        );
+
+
+        Map<String, Object> oldValues =
+                snapshot(
+                        expense
+                );
+
+
+        auditLogService.logDelete(
+                AUDIT_ENTITY_TYPE,
+                expense.getId(),
+                oldValues
         );
 
 
@@ -613,6 +649,7 @@ public class ExpenseService {
         if (
                 value == null
         ) {
+
             return null;
         }
 
@@ -695,6 +732,113 @@ public class ExpenseService {
 
 
         return normalized;
+    }
+
+
+    /*
+     * =========================
+     * Audit Snapshot
+     * =========================
+     */
+
+    private Map<String, Object> snapshot(
+            Expense expense
+    ) {
+
+        Map<String, Object> values =
+                new LinkedHashMap<>();
+
+
+        Event event =
+                expense.getEvent();
+
+
+        ExpenseCategoryMaster category =
+                expense.getCategoryMaster();
+
+
+        values.put(
+                "id",
+                expense.getId()
+        );
+
+        values.put(
+                "eventId",
+                event != null
+                        ? event.getId()
+                        : null
+        );
+
+        values.put(
+                "eventName",
+                event != null
+                        ? event.getName()
+                        : null
+        );
+
+        values.put(
+                "categoryId",
+                category != null
+                        ? category.getId()
+                        : null
+        );
+
+        values.put(
+                "categoryCode",
+                category != null
+                        ? category.getCode()
+                        : null
+        );
+
+        values.put(
+                "categoryName",
+                category != null
+                        ? category.getName()
+                        : null
+        );
+
+        values.put(
+                "description",
+                expense.getDescription()
+        );
+
+        values.put(
+                "vendorName",
+                expense.getVendorName()
+        );
+
+        values.put(
+                "amount",
+                expense.getAmount()
+        );
+
+        values.put(
+                "expenseDate",
+                expense.getExpenseDate()
+        );
+
+        values.put(
+                "paymentMode",
+                expense.getPaymentMode()
+        );
+
+        values.put(
+                "paidBy",
+                expense.getPaidBy()
+        );
+
+        values.put(
+                "paymentReference",
+                expense.getPaymentReference()
+        );
+
+        values.put(
+                "notes",
+                expense.getNotes()
+        );
+
+
+        return values;
     }
 
 

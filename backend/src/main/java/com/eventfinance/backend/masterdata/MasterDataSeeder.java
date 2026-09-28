@@ -1,5 +1,7 @@
 package com.eventfinance.backend.masterdata;
 
+import com.eventfinance.backend.masterdata.area.AreaMaster;
+import com.eventfinance.backend.masterdata.area.AreaMasterRepository;
 import com.eventfinance.backend.masterdata.expensecategory.ExpenseCategoryMaster;
 import com.eventfinance.backend.masterdata.expensecategory.ExpenseCategoryMasterRepository;
 import org.springframework.boot.CommandLineRunner;
@@ -16,13 +18,20 @@ public class MasterDataSeeder
     private final ExpenseCategoryMasterRepository
             expenseCategoryRepository;
 
+    private final AreaMasterRepository
+            areaMasterRepository;
+
 
     public MasterDataSeeder(
-            ExpenseCategoryMasterRepository expenseCategoryRepository
+            ExpenseCategoryMasterRepository expenseCategoryRepository,
+            AreaMasterRepository areaMasterRepository
     ) {
 
         this.expenseCategoryRepository =
                 expenseCategoryRepository;
+
+        this.areaMasterRepository =
+                areaMasterRepository;
     }
 
 
@@ -33,8 +42,16 @@ public class MasterDataSeeder
     ) {
 
         seedExpenseCategories();
+
+        seedAreas();
     }
 
+
+    /*
+     * =========================
+     * Expense Categories
+     * =========================
+     */
 
     private void seedExpenseCategories() {
 
@@ -134,16 +151,13 @@ public class MasterDataSeeder
                     seed.code()
             );
 
-
             category.setName(
                     seed.name()
             );
 
-
             category.setActive(
                     true
             );
-
 
             category.setSortOrder(
                     seed.sortOrder()
@@ -157,6 +171,161 @@ public class MasterDataSeeder
     }
 
 
+    /*
+     * =========================
+     * Areas
+     * =========================
+     */
+
+    private void seedAreas() {
+
+        List<AreaSeed>
+                areas =
+                List.of(
+
+                        new AreaSeed(
+                                "ITA",
+                                "ITA"
+                        ),
+
+                        new AreaSeed(
+                                "ITB",
+                                "ITB"
+                        ),
+
+                        new AreaSeed(
+                                "ITC",
+                                "ITC"
+                        ),
+
+                        new AreaSeed(
+                                "MEA",
+                                "MEA"
+                        ),
+
+                        new AreaSeed(
+                                "MEB",
+                                "MEB"
+                        ),
+
+                        new AreaSeed(
+                                "MEC",
+                                "MEC"
+                        ),
+
+                        new AreaSeed(
+                                "MED",
+                                "MED"
+                        ),
+
+                        new AreaSeed(
+                                "MEE",
+                                "MEE"
+                        ),
+
+                        new AreaSeed(
+                                "MEF",
+                                "MEF"
+                        ),
+
+                        new AreaSeed(
+                                "MEG",
+                                "MEG"
+                        ),
+
+                        new AreaSeed(
+                                "MEH",
+                                "MEH"
+                        ),
+
+                        new AreaSeed(
+                                "MEI",
+                                "MEI"
+                        ),
+
+                        new AreaSeed(
+                                "CVA",
+                                "CVA"
+                        ),
+
+                        new AreaSeed(
+                                "CVB",
+                                "CVB"
+                        ),
+
+                        new AreaSeed(
+                                "PPA",
+                                "PPA"
+                        ),
+
+                        new AreaSeed(
+                                "PPB",
+                                "PPB"
+                        ),
+
+                        new AreaSeed(
+                                "PPC",
+                                "PPC"
+                        ),
+
+                        new AreaSeed(
+                                "PPD",
+                                "PPD"
+                        ),
+
+                        new AreaSeed(
+                                "PPE",
+                                "PPE"
+                        )
+                );
+
+
+        for (
+                AreaSeed seed :
+                areas
+        ) {
+
+            if (
+                    areaMasterRepository
+                            .existsByCodeIgnoreCase(
+                                    seed.code()
+                            )
+            ) {
+
+                continue;
+            }
+
+
+            AreaMaster area =
+                    new AreaMaster();
+
+
+            area.setCode(
+                    seed.code()
+            );
+
+            area.setName(
+                    seed.name()
+            );
+
+            area.setActive(
+                    true
+            );
+
+
+            areaMasterRepository.save(
+                    area
+            );
+        }
+    }
+
+
+    /*
+     * =========================
+     * Seed Records
+     * =========================
+     */
+
     private record CategorySeed(
 
             String code,
@@ -164,6 +333,16 @@ public class MasterDataSeeder
             String name,
 
             Integer sortOrder
+
+    ) {
+    }
+
+
+    private record AreaSeed(
+
+            String code,
+
+            String name
 
     ) {
     }

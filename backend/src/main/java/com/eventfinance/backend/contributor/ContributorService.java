@@ -1,5 +1,6 @@
 package com.eventfinance.backend.contributor;
 
+import com.eventfinance.backend.audit.AuditLogService;
 import com.eventfinance.backend.common.exception.ResourceNotFoundException;
 import com.eventfinance.backend.contribution.ContributionRepository;
 import com.eventfinance.backend.contributor.dto.ContributorRequest;
@@ -9,22 +10,36 @@ import com.eventfinance.backend.masterdata.area.AreaMasterRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+
 
 @Service
 public class ContributorService {
 
-    private final ContributorRepository contributorRepository;
+    private static final String AUDIT_ENTITY_TYPE =
+            "CONTRIBUTOR";
 
-    private final ContributionRepository contributionRepository;
 
-    private final AreaMasterRepository areaMasterRepository;
+    private final ContributorRepository
+            contributorRepository;
+
+    private final ContributionRepository
+            contributionRepository;
+
+    private final AreaMasterRepository
+            areaMasterRepository;
+
+    private final AuditLogService
+            auditLogService;
 
 
     public ContributorService(
             ContributorRepository contributorRepository,
             ContributionRepository contributionRepository,
-            AreaMasterRepository areaMasterRepository
+            AreaMasterRepository areaMasterRepository,
+            AuditLogService auditLogService
     ) {
 
         this.contributorRepository =
@@ -35,6 +50,9 @@ public class ContributorService {
 
         this.areaMasterRepository =
                 areaMasterRepository;
+
+        this.auditLogService =
+                auditLogService;
     }
 
 
@@ -98,6 +116,15 @@ public class ContributorService {
                 );
 
 
+        auditLogService.logCreate(
+                AUDIT_ENTITY_TYPE,
+                saved.getId(),
+                snapshot(
+                        saved
+                )
+        );
+
+
         return mapToResponse(
                 saved
         );
@@ -136,15 +163,6 @@ public class ContributorService {
     }
 
 
-    /*
-     * Kept temporarily because ContributorController
-     * currently still accepts the old Area enum.
-     *
-     * The entity itself no longer depends on the enum.
-     *
-     * We can remove Area.java after updating
-     * ContributorController separately.
-     */
     @Transactional(readOnly = true)
     public List<ContributorResponse> getContributorsByArea(
             String area
@@ -287,6 +305,12 @@ public class ContributorService {
                 );
 
 
+        Map<String, Object> oldValues =
+                snapshot(
+                        contributor
+                );
+
+
         contributor.setName(
                 normalizeRequired(
                         request.name()
@@ -311,13 +335,6 @@ public class ContributorService {
                 contributor.getAreaMaster();
 
 
-        /*
-         * If the contributor keeps the same area,
-         * allow it even when that area has since
-         * been deactivated.
-         *
-         * This preserves historical relationships.
-         */
         boolean keepingCurrentArea =
                 currentArea != null &&
                         currentArea.getCode() != null &&
@@ -332,10 +349,6 @@ public class ContributorService {
                 !keepingCurrentArea
         ) {
 
-            /*
-             * A new/different Area assignment must
-             * always use an active Area.
-             */
             AreaMaster newArea =
                     resolveActiveArea(
                             requestedArea
@@ -366,6 +379,16 @@ public class ContributorService {
                 contributorRepository.save(
                         contributor
                 );
+
+
+        auditLogService.logUpdate(
+                AUDIT_ENTITY_TYPE,
+                saved.getId(),
+                oldValues,
+                snapshot(
+                        saved
+                )
+        );
 
 
         return mapToResponse(
@@ -402,6 +425,19 @@ public class ContributorService {
                     "Contributor cannot be deleted because contribution records exist"
             );
         }
+
+
+        Map<String, Object> oldValues =
+                snapshot(
+                        contributor
+                );
+
+
+        auditLogService.logDelete(
+                AUDIT_ENTITY_TYPE,
+                contributor.getId(),
+                oldValues
+        );
 
 
         contributorRepository.delete(
@@ -505,6 +541,7 @@ public class ContributorService {
         if (
                 value == null
         ) {
+
             return null;
         }
 
@@ -522,6 +559,7 @@ public class ContributorService {
         if (
                 value == null
         ) {
+
             return null;
         }
 
@@ -542,6 +580,7 @@ public class ContributorService {
         if (
                 value == null
         ) {
+
             return null;
         }
 
@@ -558,6 +597,75 @@ public class ContributorService {
         return normalized.isBlank()
                 ? null
                 : normalized;
+    }
+
+
+    /*
+     * =========================
+     * Audit Snapshot
+     * =========================
+     */
+
+    private Map<String, Object> snapshot(
+            Contributor contributor
+    ) {
+
+        Map<String, Object> values =
+                new LinkedHashMap<>();
+
+
+        AreaMaster area =
+                contributor.getAreaMaster();
+
+
+        values.put(
+                "id",
+                contributor.getId()
+        );
+
+        values.put(
+                "name",
+                contributor.getName()
+        );
+
+        values.put(
+                "houseNumber",
+                contributor.getHouseNumber()
+        );
+
+        values.put(
+                "areaId",
+                area != null
+                        ? area.getId()
+                        : null
+        );
+
+        values.put(
+                "areaCode",
+                area != null
+                        ? area.getCode()
+                        : null
+        );
+
+        values.put(
+                "areaName",
+                area != null
+                        ? area.getName()
+                        : null
+        );
+
+        values.put(
+                "phone",
+                contributor.getPhone()
+        );
+
+        values.put(
+                "notes",
+                contributor.getNotes()
+        );
+
+
+        return values;
     }
 
 

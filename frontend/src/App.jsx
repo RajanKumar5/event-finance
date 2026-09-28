@@ -23,6 +23,7 @@ import Events from "./pages/Events";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
 import Users from "./pages/Users";
+import AuditHistory from "./pages/AuditHistory";
 import Login from "./pages/Login";
 
 
@@ -148,6 +149,14 @@ function App() {
                 path="/users"
                 element={
                   <Users />
+                }
+              />
+
+
+              <Route
+                path="/audit-history"
+                element={
+                  <AuditHistory />
                 }
               />
 

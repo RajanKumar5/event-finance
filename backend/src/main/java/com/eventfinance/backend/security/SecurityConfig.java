@@ -117,6 +117,22 @@ public class SecurityConfig {
 
 
                                         /*
+                                         * Audit history is ADMIN-only.
+                                         *
+                                         * This must appear before the generic
+                                         * GET /api/v1/** rule, otherwise
+                                         * EDITOR and VIEWER would also be
+                                         * allowed to read audit history.
+                                         */
+                                        .requestMatchers(
+                                                "/api/v1/audit-logs/**"
+                                        )
+                                        .hasRole(
+                                                "ADMIN"
+                                        )
+
+
+                                        /*
                                          * Master-data writes are
                                          * ADMIN-only.
                                          */
@@ -279,9 +295,9 @@ public class SecurityConfig {
                                                             .write(
                                                                     """
                                                                     {
-                                                                      "status": 401,
-                                                                      "error": "Unauthorized",
-                                                                      "message": "Please sign in to continue."
+                                                                       "status": 401,
+                                                                       "error": "Unauthorized",
+                                                                       "message": "Please sign in to continue."
                                                                     }
                                                                     """
                                                             );
@@ -316,9 +332,9 @@ public class SecurityConfig {
                                                             .write(
                                                                     """
                                                                     {
-                                                                      "status": 403,
-                                                                      "error": "Forbidden",
-                                                                      "message": "You have read-only access. You cannot add, edit, or delete records."
+                                                                       "status": 403,
+                                                                       "error": "Forbidden",
+                                                                       "message": "You do not have permission to access this resource."
                                                                     }
                                                                     """
                                                             );
