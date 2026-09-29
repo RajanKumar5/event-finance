@@ -13,9 +13,6 @@ import Pagination from "../components/Pagination";
 import "./AuditHistory.css";
 
 
-const PAGE_SIZE = 10;
-
-
 const ENTITY_OPTIONS = [
     "EVENT",
     "CONTRIBUTOR",
@@ -104,6 +101,7 @@ const parseJson = (
     if (
         !value
     ) {
+
         return {};
     }
 
@@ -133,6 +131,7 @@ const formatFieldName = (
     if (
         FIELD_LABELS[field]
     ) {
+
         return FIELD_LABELS[field];
     }
 
@@ -161,6 +160,7 @@ const formatEnum = (
         typeof value !==
         "string"
     ) {
+
         return value;
     }
 
@@ -268,6 +268,7 @@ const formatDateTime = (
     if (
         !value
     ) {
+
         return "—";
     }
 
@@ -283,6 +284,7 @@ const formatDateTime = (
             date.getTime()
         )
     ) {
+
         return value;
     }
 
@@ -309,6 +311,7 @@ const getChangedFields = (
         parseJson(
             audit.oldValues
         );
+
 
     const newValues =
         parseJson(
@@ -391,6 +394,7 @@ const getChangedFields = (
             ...Object.keys(
                 oldValues
             ),
+
             ...Object.keys(
                 newValues
             ),
@@ -411,6 +415,7 @@ const getChangedFields = (
                             field
                         )
                 ) {
+
                     return false;
                 }
 
@@ -466,13 +471,19 @@ const getEntityDescription = (
     ) {
 
         case "EVENT":
-            return values.name ||
-                `Event #${audit.entityId}`;
+
+            return (
+                values.name ||
+                `Event #${audit.entityId}`
+            );
 
 
         case "CONTRIBUTOR":
-            return values.name ||
-                `Contributor #${audit.entityId}`;
+
+            return (
+                values.name ||
+                `Contributor #${audit.entityId}`
+            );
 
 
         case "CONTRIBUTION":
@@ -484,13 +495,16 @@ const getEntityDescription = (
                 return `Receipt ${values.receiptNumber}`;
             }
 
+
             return `Contribution #${audit.entityId}`;
 
 
         case "EXPENSE":
 
-            return values.description ||
-                `Expense #${audit.entityId}`;
+            return (
+                values.description ||
+                `Expense #${audit.entityId}`
+            );
 
 
         default:
@@ -520,6 +534,9 @@ const AuditHistory = () => {
     ] = useState("");
 
 
+    /*
+     * Filters
+     */
     const [
         entityFilter,
         setEntityFilter,
@@ -544,10 +561,19 @@ const AuditHistory = () => {
     ] = useState("");
 
 
+    /*
+     * Pagination
+     */
     const [
         currentPage,
         setCurrentPage,
     ] = useState(1);
+
+
+    const [
+        pageSize,
+        setPageSize,
+    ] = useState(10);
 
 
     const loadAuditLogs =
@@ -603,6 +629,10 @@ const AuditHistory = () => {
     );
 
 
+    /*
+     * Return to page 1 whenever
+     * any filter changes.
+     */
     useEffect(
         () => {
 
@@ -753,13 +783,16 @@ const AuditHistory = () => {
         );
 
 
+    /*
+     * Pagination calculations
+     */
     const totalPages =
         Math.max(
             1,
 
             Math.ceil(
                 filteredAuditLogs.length /
-                PAGE_SIZE
+                pageSize
             )
         );
 
@@ -771,18 +804,38 @@ const AuditHistory = () => {
         );
 
 
+    const startIndex =
+        (
+            safeCurrentPage -
+            1
+        ) *
+        pageSize;
+
+
     const paginatedAuditLogs =
         filteredAuditLogs
             .slice(
-                (
-                    safeCurrentPage -
-                    1
-                ) *
-                PAGE_SIZE,
+                startIndex,
 
-                safeCurrentPage *
-                PAGE_SIZE
+                startIndex +
+                pageSize
             );
+
+
+    const handlePageSizeChange =
+        (
+            newPageSize
+        ) => {
+
+            setPageSize(
+                newPageSize
+            );
+
+
+            setCurrentPage(
+                1
+            );
+        };
 
 
     const clearFilters =
@@ -802,6 +855,10 @@ const AuditHistory = () => {
 
             setSearchTerm(
                 ""
+            );
+
+            setCurrentPage(
+                1
             );
         };
 
@@ -1134,6 +1191,7 @@ const AuditHistory = () => {
                 ) : (
 
                     <>
+
                         <div className="audit-list">
 
                             {paginatedAuditLogs.map(
@@ -1192,7 +1250,9 @@ const AuditHistory = () => {
                                                                     audit.entityType
                                                                 )
                                                             }
+
                                                             {" #"}
+
                                                             {
                                                                 audit.entityId
                                                             }
@@ -1201,6 +1261,7 @@ const AuditHistory = () => {
 
                                                         <span>
                                                             Changed by{" "}
+
                                                             <strong>
                                                                 {
                                                                     audit.changedBy
@@ -1270,9 +1331,11 @@ const AuditHistory = () => {
                                                                             }
                                                                         </span>
 
+
                                                                         <span className="audit-arrow">
                                                                             →
                                                                         </span>
+
 
                                                                         <span className="audit-new-value">
                                                                             {
@@ -1328,22 +1391,23 @@ const AuditHistory = () => {
                         </div>
 
 
-                        {totalPages >
-                            1 && (
-
-                                <Pagination
-                                    currentPage={
-                                        safeCurrentPage
-                                    }
-                                    totalPages={
-                                        totalPages
-                                    }
-                                    onPageChange={
-                                        setCurrentPage
-                                    }
-                                />
-
-                            )}
+                        <Pagination
+                            currentPage={
+                                safeCurrentPage
+                            }
+                            totalItems={
+                                filteredAuditLogs.length
+                            }
+                            pageSize={
+                                pageSize
+                            }
+                            onPageChange={
+                                setCurrentPage
+                            }
+                            onPageSizeChange={
+                                handlePageSizeChange
+                            }
+                        />
 
                     </>
                 )}
